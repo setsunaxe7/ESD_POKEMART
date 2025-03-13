@@ -1,5 +1,19 @@
 <script setup>
 import HelloWorld from './components/HelloWorld.vue'
+
+import { createMemoryHistory, createRouter } from 'vue-router'
+
+import Market from './components/Market.vue'
+
+const routes = [
+  { path: '/', component: HelloWorld },
+  { path: '/about', component: Market },
+]
+
+const router = createRouter({
+  history: createMemoryHistory(),
+  routes,
+})
 </script>
 
 <template>
@@ -10,8 +24,12 @@ import HelloWorld from './components/HelloWorld.vue'
     <a href="https://vuejs.org/" target="_blank">
       <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
     </a>
+    <h1> Bulba-Trade | 卡片皇朝 </h1>
+    <div class="enterprise-details" style="margin-top: 20px">
+      Already have an account?<router-link to="/about">LOGIN</router-link>
+    </div>
   </div>
-  <HelloWorld msg="Vite + Vue" />
+  <HelloWorld msg="" />
 </template>
 
 <style scoped>
