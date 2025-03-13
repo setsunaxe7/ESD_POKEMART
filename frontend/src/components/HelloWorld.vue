@@ -15,11 +15,11 @@ const count = ref(0)
     <button type="button" @click="count++">count is {{ count }}</button>
     <p>
       Edit
-      <code>components/HelloWorld.vue</code> to test HMR
+      <code>components/HelloWorld.vue</code>
     </p>
   </div>
 
-  <p>
+  <!-- <p>
     Check out
     <a href="https://vuejs.org/guide/quick-start.html#local" target="_blank"
       >create-vue</a
@@ -33,8 +33,8 @@ const count = ref(0)
       >Vue Docs Scaling up Guide</a
     >.
   </p>
-  <p class="read-the-docs">Click on the Vite and Vue logos to learn more</p>
-</template>
+  <p class="read-the-docs">Click on the Vite and Vue logos to learn more</p> -->
+</template> 
 
 <style scoped>
 .read-the-docs {
