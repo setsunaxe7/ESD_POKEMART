@@ -60,7 +60,7 @@
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
-        font-family: var(--font-montserrat);
+        font-family: var(--font-open-sans);
         font-weight: 800;
     }
 

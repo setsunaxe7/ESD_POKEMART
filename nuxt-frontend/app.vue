@@ -1,6 +1,7 @@
 <template>
     <UApp>
         <Header />
-        <NuxtPage class="mt-12" />
+        <NuxtPage class="my-12" />
+        <Footer />
     </UApp>
 </template>
