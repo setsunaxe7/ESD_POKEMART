@@ -1,0 +1,25 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+@import "tailwindcss" theme(static);
+@import "@nuxt/ui-pro";
+
+:root {
+    /* Fonts */
+    --font-open-sans: "Open Sans", sans-serif;
+    --font-montserrat: "Montserrat", sans-serif;
+
+    /* Colors */
+    --color-fog: #a7d7b8;
+    --color-anakiwa: #76b7a1;
+    --color-malibu: #4c9a89;
+    --color-dodger-blue: #2f7f63;
+    --color-azure-radiance: #1b5a49;
+}
+
+body,
+h1,
+h2,
+h3,
+p {
+    font-family: var(--font-montserrat);
+}
