@@ -94,9 +94,9 @@
             :links="gradingLink"
             reverse>
             <img
-                src="https://pokerand.net/cdn/shop/collections/COMING_SOON.png?v=1575900550"
+                src="../assets/img/index/grading.png"
                 alt="Illustration"
-                class="w-full rounded-[calc(var(--ui-radius)*2)]" />
+                class="w-full rounded-[calc(var(--ui-radius)*2)] scale-110" />
         </UPageSection>
         <UPageGrid>
             <UPageCard

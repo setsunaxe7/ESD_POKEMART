@@ -1,74 +1,44 @@
 <script setup lang="ts">
-    import axios from "axios";
+    import { useCards } from "../composables/inventory";
 
-    // Define interfaces for type safety
-    interface PokemonCardImage {
-        small: string;
-        large: string;
-    }
+    const { cards, isLoading, error, fetchCards } = useCards();
 
-    interface PokemonCard {
-        id: string;
-        name: string;
-        images: PokemonCardImage;
-        // Add other properties you need
-    }
-
-    interface PokemonApiResponse {
-        data: PokemonCard[];
-    }
-
-    // State for cards
-    const cards = ref<PokemonCard[]>([]);
-    const isLoading = ref(true);
-    const error = ref<string | null>(null);
-
-    // Function to fetch cards
-    const fetchCards = async () => {
-        try {
-            isLoading.value = true;
-            const response = await axios.get<PokemonApiResponse>(
-                "https://api.pokemontcg.io/v2/cards?q=set.id:sv3",
-                {
-                    headers: {
-                        "X-Api-Key": "1bdbe362-1c4f-47bf-9f67-c5553234c826",
-                    },
-                }
-            );
-
-            cards.value = response.data.data;
-            console.log("Cards loaded:", cards.value.length);
-        } catch (err: any) {
-            error.value = err.message || "Failed to fetch Pokemon cards";
-            console.error(error.value);
-        } finally {
-            isLoading.value = false;
-        }
-    };
-
-    // Call the fetch function when component mounts
+    // Fetch cards when component mounts
     onMounted(fetchCards);
 </script>
 
 <template>
-    <UMain>
-        <UContainer>
-            <h1 class="text-2xl font-bold mb-6">Pokémon Card Collection</h1>
+    <UContainer
+        class="min-h-[calc(100vh-var(--header-height)-var(--footer-height)-6rem)] flex flex-col">
+        <h1 class="text-2xl font-bold mb-6">Pokémon Card Collection</h1>
 
-            <div v-if="isLoading" class="flex justify-center my-8">
-                <ULoading />
-            </div>
+        <!-- Loading state -->
+        <div
+            v-if="isLoading"
+            class="flex-1 flex flex-col gap-4 justify-center items-center animate__animated animate__pulse animate__infinite">
+            <img src="../assets/img/loader.svg" alt="Loading" class="w-75 h-auto" />
+            <h2 class="text-xl font-bold text-gray-500">Loading...</h2>
+        </div>
 
-            <div v-else-if="error" class="text-red-500">
-                {{ error }}
-            </div>
+        <!-- Error state -->
+        <div v-else-if="error" class="p-4 bg-red-100 text-red-700 rounded">
+            {{ error }}
+        </div>
 
-            <div v-else class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <div v-for="card in cards" :key="card.id" class="card-container">
-                    <img :src="card.images.small" :alt="card.name" class="w-full rounded" />
-                    <p class="mt-2 font-medium">{{ card.name }}</p>
+        <!-- Cards display -->
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <UCard v-for="card in cards" :key="card.id" class="card-container">
+                <img
+                    v-if="card.image_url"
+                    :src="card.image_url"
+                    :alt="card.name"
+                    class="w-full h-48 object-contain" />
+                <div v-else class="w-full h-48 bg-gray-100 flex items-center justify-center">
+                    No Image
                 </div>
-            </div>
-        </UContainer>
-    </UMain>
+
+                <h3 class="mt-2 font-medium text-lg">{{ card.name }}</h3>
+            </UCard>
+        </div>
+    </UContainer>
 </template>

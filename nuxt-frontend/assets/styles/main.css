@@ -14,6 +14,10 @@
     --color-malibu: #4c9a89;
     --color-dodger-blue: #2f7f63;
     --color-azure-radiance: #1b5a49;
+
+    /* Header and footer height */
+    --header-height: 64px;
+    --footer-height: 80px;
 }
 
 body,
