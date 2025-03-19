@@ -98,7 +98,7 @@
                 alt="Illustration"
                 class="w-full rounded-[calc(var(--ui-radius)*2)] scale-110" />
         </UPageSection>
-        <UPageGrid>
+        <!-- <UPageGrid>
             <UPageCard
                 v-for="(card, index) in cards"
                 :key="index"
@@ -114,7 +114,7 @@
                     </div>
                 </template>
             </UPageCard>
-        </UPageGrid>
+        </UPageGrid> -->
     </UContainer>
 </template>
 
