@@ -1,63 +1,81 @@
 from flask import Flask, request, jsonify
-import requests
-import pika
+from pymongo import MongoClient
+import redis
+import os
 import json
 
 app = Flask(__name__)
 
-# Marketplace API endpoint
-MARKETPLACE_API_URL = "http://marketplace-service/api/auction"
+# Load MongoDB connection string from environment variables
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+client = MongoClient(MONGO_URI)
 
-# RabbitMQ Connection (for AMQP messaging)
-RABBITMQ_HOST = "rabbitmq"  # Use the service name in Docker
-QUEUE_NAME = "new_bid"
+# Database & Collection
+db = client["bidding_db"]  # Database Name
+bids_collection = db["bids"]  # Collection Name
 
-def publish_new_bid(auction_id, buyer_id, price):
-    """Publishes a NewBidPlaced event to RabbitMQ."""
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
-    channel = connection.channel()
-    channel.queue_declare(queue=QUEUE_NAME, durable=True)
+# Redis Connection
+redis_client = redis.StrictRedis(host="localhost", port=6379, decode_responses=True)
 
-    message = {
-        "auction_id": auction_id,
-        "buyer_id": buyer_id,
-        "price": price
-    }
-
-    channel.basic_publish(
-        exchange="",
-        routing_key=QUEUE_NAME,
-        body=json.dumps(message),
-        properties=pika.BasicProperties(
-            delivery_mode=2,  # Make the message persistent
-        ),
-    )
-    connection.close()
-
+# POST route to place a bid
 @app.route("/bid", methods=["POST"])
 def place_bid():
-    """Handles new bid placements from the frontend."""
     data = request.json
     auction_id = data.get("auctionId")
-    buyer_id = data.get("buyerId")
-    price = data.get("price")
+    bid_amount = float(data.get("price"))  # Ensure it's a float
+    bidder_id = data.get("buyerId")
 
-    if not auction_id or not buyer_id or not price:
+    if not all([auction_id, bid_amount, bidder_id]):
         return jsonify({"error": "Missing required fields"}), 400
 
-    # Send PUT request to Marketplace Microservice
-    marketplace_response = requests.put(
-        f"{MARKETPLACE_API_URL}/{auction_id}",
-        json={"buyerId": buyer_id, "price": price},
+    # Check the highest bid from Redis cache first
+    cached_highest = redis_client.get(f"highest_bid:{auction_id}")
+    current_highest = float(cached_highest) if cached_highest else 0
+
+    if bid_amount <= current_highest:
+        return jsonify({"error": "Bid must be higher than the current highest bid"}), 400
+
+    # Store the new bid in MongoDB
+    new_bid = {
+        "auctionId": auction_id,
+        "buyerId": bidder_id,
+        "price": bid_amount
+    }
+    bids_collection.insert_one(new_bid)
+
+    # Update Redis cache with the new highest bid
+    redis_client.set(f"highest_bid:{auction_id}", bid_amount)
+
+    return jsonify({"message": "Bid placed successfully", "newHighest": bid_amount}), 201
+
+
+# GET route to fetch the highest bid for an auction
+@app.route("/highest-bid/<auction_id>", methods=["GET"])
+def get_highest_bid(auction_id):
+    # Check Redis cache first
+    cached_highest = redis_client.get(f"highest_bid:{auction_id}")
+    
+    if cached_highest:
+        return jsonify({"auctionId": auction_id, "highestBid": float(cached_highest)})
+
+    # If not cached, fetch from MongoDB
+    highest_bid_entry = bids_collection.find_one(
+        {"auctionId": auction_id}, sort=[("price", -1)]
     )
+    highest_bid = highest_bid_entry["price"] if highest_bid_entry else 0
 
-    if marketplace_response.status_code != 200:
-        return jsonify({"error": "Failed to update auction"}), 500
+    # Store in Redis for future use
+    redis_client.set(f"highest_bid:{auction_id}", highest_bid)
 
-    # Publish NewBidPlaced event
-    publish_new_bid(auction_id, buyer_id, price)
+    return jsonify({"auctionId": auction_id, "highestBid": highest_bid})
 
-    return jsonify({"message": "Bid placed successfully"}), 200
+
+# GET route to fetch all bids for an auction
+@app.route("/bids/<auction_id>", methods=["GET"])
+def get_bids(auction_id):
+    bids = list(bids_collection.find({"auctionId": auction_id}, {"_id": 0}))  # Hide MongoDB _id
+    return jsonify({"bids": bids})
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5002, debug=True)
