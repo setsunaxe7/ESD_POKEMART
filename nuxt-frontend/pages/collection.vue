@@ -9,8 +9,11 @@
 
 <template>
     <UContainer
-        class="min-h-[calc(100vh-var(--header-height)-var(--footer-height)-6rem)] flex flex-col">
-        <h1 class="text-2xl font-bold mb-6">Pokémon Card Collection</h1>
+        class="min-h-[calc(100vh-var(--header-height)-var(--footer-height))] flex flex-col">
+        <UPageSection
+                title="Featured Card Collection"
+                description="View all the cards in the iconic Scarlet & Violet 151 collection"
+                :ui="{container: 'lg:py-24'}" />
 
         <!-- Loading state -->
         <div
