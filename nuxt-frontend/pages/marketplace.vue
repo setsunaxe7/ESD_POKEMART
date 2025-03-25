@@ -6,7 +6,7 @@ const currentPage=ref(1);
 
 // Fetch Cards (pending API endpoint, trial code)
 const { data: cards } = await useAsyncData(() =>
-    $fetch(`/api/cards`, {
+    $fetch(`/api/marketplace/listings`, {
         query: { page: currentPage.value, search: searchQuery.value, sort: sortBy.value },
     })
 );
@@ -30,8 +30,7 @@ const items = ref([
 <template>
     <UMain>
         <UContainer>
-            <h1>Marketplace Page</h1>
-            <div class="p-4">
+            <div>
 
                 <UInput v-model="searchQuery" placeholder="Search Pokemon cards..." icon="i-heroicons-magnifying-glass" class="w-full max-w" />
 
@@ -49,18 +48,36 @@ const items = ref([
                     <UButton label="Open" icon="i-lucide-menu" color="neutral" variant="outline" />
                 </UDropdownMenu>
 
+                <UDashboardSidebar resizable collapsible>
+                    <div class="flex items-center gap-2 px-4 py-2">
+                        <span class="font-bold text-lg">Menu</span>
+                    </div>
+                    <ul class="flex flex-col gap-2">
+                        <li class="px-4 py-2 hover:bg-gray-100 rounded">Option 1</li>
+                        <li class="px-4 py-2 hover:bg-gray-100 rounded">Option 2</li>
+                        <li class="px-4 py-2 hover:bg-gray-100 rounded">Option 3</li>
+                    </ul>
+                    <div class="flex items-center gap-2 px-4 py-2">
+                        <span>Footer Content</span>
+                    </div>
+                </UDashboardSidebar>
+
                 <UPageGrid>
-                    <UPageCard v-for="card in cards" :key="card.id">
-                        <NuxtLink :to="`/product/${card.id}`">
+                    <!-- <UPageCard v-for="card in cards" :key="card.id"> -->
+                        <!-- <NuxtLink :to="`/product/${card.id}`">
                         <img :src="card.image" alt="card.name" class="w-full h-40 object-cover" loading="lazy" />
                         <h3 class="text-lg font-medium mt-2">{{ card.name }}</h3>
                         <p class="text-sm text-gray-500">{{ card.set }}</p>
-                        <p class="text-primary font-bold">${{ card.price }}</p>
-                        </NuxtLink>
+                        <p class="text-primary font-bold">${{ card.price }}</p> -->
+                        <!-- </NuxtLink> -->
+                    <UPageCard>
+                        <p class="text-primary font-bold">Hello</p>
                     </UPageCard>
                 </UPageGrid>
 
-                <UPagination v-model="currentPage" :total="100" :per-page="20" class="mt-6 justify-between items-center" />
+                <div class="flex justify-center">
+                    <UPagination v-model="currentPage" :total="100" :per-page="20" class="mt-6 justify-between items-center" />
+                </div>
 
             </div>
         </UContainer>
