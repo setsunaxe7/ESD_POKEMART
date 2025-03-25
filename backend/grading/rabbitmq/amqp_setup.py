@@ -71,12 +71,12 @@ create_queue(
     routing_key="*.grader",
 )
 
-# create_queue(
-#     channel=channel,
-#     exchange_name=exchange_name,
-#     queue_name="grading",
-#     routing_key="*.update",
-# )
+create_queue(
+    channel=channel,
+    exchange_name=exchange_name,
+    queue_name="grading",
+    routing_key="*.update",
+)
 
 
 create_queue(
