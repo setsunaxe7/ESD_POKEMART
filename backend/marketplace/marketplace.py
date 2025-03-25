@@ -103,15 +103,6 @@ def get_listings():
         # Execute the query
         result = query.execute()
 
-        # Join with cards table to get card details
-        if result.data:
-            for listing in result.data:
-                card_id = listing.get('card_id')
-                if card_id:
-                    card_result = supabase.table('cards').select('*').eq('card_id', card_id).execute()
-                    if card_result.data:
-                        listing['card_details'] = card_result.data[0]
-
         return jsonify(result.data), 200
 
     except Exception as e:
@@ -133,15 +124,8 @@ def get_listing(listing_id):
         if not result.data:
             return jsonify({"error": "Listing not found"}), 404
 
-        # Get card details
-        listing = result.data[0]
-        card_id = listing.get('card_id')
-        if card_id:
-            card_result = supabase.table('cards').select('*').eq('card_id', card_id).execute()
-            if card_result.data:
-                listing['card_details'] = card_result.data[0]
-
-        return jsonify(listing), 200
+        # Return the listing directly
+        return jsonify(result.data[0]), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
