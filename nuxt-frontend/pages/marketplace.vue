@@ -1,15 +1,24 @@
 <script setup lang="ts">
+import { useListings } from "../composables/marketplace";
 
-const searchQuery = ref("");
-const sortBy = ref("Relevance");
-const currentPage=ref(1);
+const { listings, isListingLoading, listingError, fetchListings } = useListings();
 
-// Fetch Cards (pending API endpoint, trial code)
-const { data: cards } = await useAsyncData(() =>
-    $fetch(`/api/marketplace/listings`, {
-        query: { page: currentPage.value, search: searchQuery.value, sort: sortBy.value },
-    })
-);
+onMounted(fetchListings);
+
+// const searchQuery = ref("");
+// const sortBy = ref("Relevance");
+// const currentPage=ref(1);
+
+// // Fetch Cards (pending API endpoint, trial code)
+// const { data: listings } = await useAsyncData(() =>
+//     $fetch(`127.0.0.1:8001/api/marketplace/listings`, {
+//         // query: { page: currentPage.value, search: searchQuery.value, sort: sortBy.value },
+//     })
+// );
+
+console.log(listings)
+
+// edit to see how to implement the same fetching data in marketplace/inventory.ts
 
 const items = ref([
   {

@@ -22,7 +22,7 @@ export function useListings() {
     const fetchListings = async () => {
         try {
             isListingLoading.value = true;
-            const response = await axios.get("http://127.0.0.1:8001/marketplace/listings");
+            const response = await axios.get("http://127.0.0.1:8001/api/marketplace/listings");
             listings.value = response.data;
         } catch (err: any) {
             listingError.value = err.message || "Failed to fetch listings";
