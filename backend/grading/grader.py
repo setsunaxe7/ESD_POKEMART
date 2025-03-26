@@ -134,6 +134,10 @@ def callback(channel, method, properties, body):
         else:
             print(f"Received message with routing key: {routing_key}")
             print(f"Grader message (JSON): {result}")
+            result_json = json.dumps(result)
+            channel.basic_publish(
+                exchange=exchange_name, routing_key="externalGrader.notify", body=result_json
+            )
     except Exception as e:
         print(f"Unable to parse JSON: {e=}")
         print(f"Grader message: {body}")

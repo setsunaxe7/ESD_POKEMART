@@ -1,0 +1,32 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: bidding-service
+    url: http://bidding-service:5002
+    routes:
+      - name: bidding-route
+        paths:
+          - /bid
+
+  - name: inventory-service
+    url: http://inventory-service:5003
+    routes:
+      - name: inventory-route
+        paths:
+          - /inventory
+
+  - name: marketplace-service
+    url: http://marketplace-service:5004
+    routes:
+      - name: marketplace-route
+        paths:
+          - /marketplace
+
+plugins:
+  - name: proxy-cache
+    config:
+      strategy: memory
+      content_type:
+        - application/json
+

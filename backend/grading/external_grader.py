@@ -14,15 +14,15 @@ def callback(channel, method, properties, body):
     # required signature for the callback; no return
     try:
         result = json.loads(body)
-        result["cardStatus"] = "received"
-        
+        result_pure = json.loads(body)
         # Convert result to a JSON string before publishing
+        result["cardStatus"] = "received"
         result_json = json.dumps(result)
         
         channel.basic_publish(
             exchange=exchange_name, routing_key="externalGrader.update", body=result_json
         )
-        print(f"External Grader message (JSON): {result}")
+        print(f"External Grader message (JSON): {result_pure}")
     except Exception as e:
         print(f"Unable to parse JSON: {e=}")
         print(f"External Grader message: {body}")

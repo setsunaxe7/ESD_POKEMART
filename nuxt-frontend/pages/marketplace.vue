@@ -1,94 +1,145 @@
 <script setup lang="ts">
-import { useListings } from "../composables/marketplace";
 
-const { listings, isListingLoading, listingError, fetchListings } = useListings();
+import { ref, onMounted } from "vue";
+import type { Listing } from "../types/listing";
 
-onMounted(fetchListings);
+// Reactive variables for search, sorting, and pagination
+const searchQuery = ref("");
+const sortBy = ref("Relevance");
+const currentPage = ref(1);
 
-// const searchQuery = ref("");
-// const sortBy = ref("Relevance");
-// const currentPage=ref(1);
+const listings = ref<Listing[]>([]);
 
-// // Fetch Cards (pending API endpoint, trial code)
-// const { data: listings } = await useAsyncData(() =>
-//     $fetch(`127.0.0.1:8001/api/marketplace/listings`, {
-//         // query: { page: currentPage.value, search: searchQuery.value, sort: sortBy.value },
-//     })
-// );
 
-console.log(listings)
+// Fetch Cards from API
+onMounted(async () => {
+  try {
+    const response = await $fetch<Listing[]>("http://localhost:5004/api/marketplace/listings");
+    listings.value = response; // Assign API response to listings
+  } catch (error) {
+    console.error("Error fetching marketplace listings:", error);
+  }
+});
 
-// edit to see how to implement the same fetching data in marketplace/inventory.ts
-
+// Dropdown menu items for sorting
 const items = ref([
   {
-    label: 'Relevance',
-    icon: 'i-lucide-user'
+    label: "Relevance",
+    icon: "i-lucide-user",
   },
   {
-    label: 'Price: Low to High',
-    icon: 'i-lucide-credit-card'
+    label: "Price: Low to High",
+    icon: "i-lucide-credit-card",
   },
   {
-    label: 'Price: High to Low',
-    icon: 'i-lucide-cog'
-  }
-])
+    label: "Price: High to Low",
+    icon: "i-lucide-cog",
+  },
+]);
+
+// WebSocket setup to listen for price updates
+onMounted(() => {
+  const socket = new WebSocket("ws://localhost:8765");
+
+  socket.onmessage = (event) => {
+    const data = event.data.split(":");
+    const cardId = data[0];
+    const newPrice = data[1];
+
+    // Find the card in the list and update its price dynamically
+    const cardToUpdate = listings.value.find((card) => card.id === cardId);
+    if (cardToUpdate) {
+      cardToUpdate.price = parseFloat(newPrice);
+    }
+  };
+
+  socket.onerror = (error) => {
+    console.error("WebSocket error:", error);
+  };
+});
 </script>
 
 <template>
     <UMain>
-        <UContainer>
-            <div>
+      <div class="flex h-screen">
+        <!-- Sidebar -->
+        <UDashboardSidebar
+          resizable
+          collapsible
+          class="w-1/4 bg-gray-100 h-full flex-shrink-0"
+        >
+          <div class="flex items-center gap-2 px-4 py-2">
+            <span class="font-bold text-lg">Menu</span>
+          </div>
+          <ul class="flex flex-col gap-2">
+            <li class="px-4 py-2 hover:bg-gray-200 rounded">Option 1</li>
+            <li class="px-4 py-2 hover:bg-gray-200 rounded">Option 2</li>
+            <li class="px-4 py-2 hover:bg-gray-200 rounded">Option 3</li>
+          </ul>
+          <div class="flex items-center gap-2 px-4 py-2">
+            <span>Footer Content</span>
+          </div>
+        </UDashboardSidebar>
 
-                <UInput v-model="searchQuery" placeholder="Search Pokemon cards..." icon="i-heroicons-magnifying-glass" class="w-full max-w" />
+        <!-- Main Content -->
+        <UContainer class="flex-grow p-4 overflow-y-auto">
+          <!-- Search Input -->
+          <UInput
+            v-model="searchQuery"
+            placeholder="Search Pokemon cards..."
+            icon="i-heroicons-magnifying-glass"
+            class="w-full max-w mb-4"
+          />
 
-                <UDropdownMenu
-                    :items="items"
-                    :content="{
-                    align: 'start',
-                    side: 'bottom',
-                    sideOffset: 8
-                    }"
-                    :ui="{
-                    content: 'w-48'
-                    }"
-                >
-                    <UButton label="Open" icon="i-lucide-menu" color="neutral" variant="outline" />
-                </UDropdownMenu>
+          <!-- Dropdown Menu -->
+          <UDropdownMenu
+            :items="items"
+            :content="{
+              align: 'start',
+              side: 'bottom',
+              sideOffset: 8
+            }"
+            :ui="{
+              content: 'w-48'
+            }"
+          >
+            <UButton
+              label="Open"
+              icon="i-lucide-menu"
+              color="neutral"
+              variant="outline"
+              class="mb-4"
+            />
+          </UDropdownMenu>
 
-                <UDashboardSidebar resizable collapsible>
-                    <div class="flex items-center gap-2 px-4 py-2">
-                        <span class="font-bold text-lg">Menu</span>
-                    </div>
-                    <ul class="flex flex-col gap-2">
-                        <li class="px-4 py-2 hover:bg-gray-100 rounded">Option 1</li>
-                        <li class="px-4 py-2 hover:bg-gray-100 rounded">Option 2</li>
-                        <li class="px-4 py-2 hover:bg-gray-100 rounded">Option 3</li>
-                    </ul>
-                    <div class="flex items-center gap-2 px-4 py-2">
-                        <span>Footer Content</span>
-                    </div>
-                </UDashboardSidebar>
+          <!-- Marketplace Listings -->
+          <UPageGrid>
+            <!-- Dynamically create cards for each listing -->
+            <UPageCard v-for="listing in listings" :key="listing.id">
+              <NuxtLink :to="'/listing/' + listing.id">
+                <img
+                  :src="listing.image_url || 'https://placehold.co/400'"
+                  alt="listing.title"
+                  class="w-full h-40 object-cover"
+                  loading="lazy"
+                />
+                <h3 class="text-lg font-medium mt-2">{{ listing.title }}</h3>
+                <p class="text-sm text-gray-500">{{ listing.description }}</p>
+                <p class="text-primary font-bold">${{ listing.price }}</p>
+              </NuxtLink>
+            </UPageCard>
+          </UPageGrid>
 
-                <UPageGrid>
-                    <!-- <UPageCard v-for="card in cards" :key="card.id"> -->
-                        <!-- <NuxtLink :to="`/product/${card.id}`">
-                        <img :src="card.image" alt="card.name" class="w-full h-40 object-cover" loading="lazy" />
-                        <h3 class="text-lg font-medium mt-2">{{ card.name }}</h3>
-                        <p class="text-sm text-gray-500">{{ card.set }}</p>
-                        <p class="text-primary font-bold">${{ card.price }}</p> -->
-                        <!-- </NuxtLink> -->
-                    <UPageCard>
-                        <p class="text-primary font-bold">Hello</p>
-                    </UPageCard>
-                </UPageGrid>
-
-                <div class="flex justify-center">
-                    <UPagination v-model="currentPage" :total="100" :per-page="20" class="mt-6 justify-between items-center" />
-                </div>
-
-            </div>
+          <!-- Pagination -->
+          <div class="flex justify-center mt-6">
+            <UPagination
+              v-model="currentPage"
+              :total="100"
+              :per-page="20"
+              class="justify-between items-center"
+            />
+          </div>
         </UContainer>
+      </div>
     </UMain>
-</template>
+  </template>

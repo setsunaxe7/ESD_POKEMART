@@ -3,19 +3,105 @@ from supabase import create_client
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import uuid
+import os
+import redis
+import asyncio
+import websockets
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
 # Supabase configuration
-SUPABASE_URL = 'https://cdfuwhzjwweduhuuuagv.supabase.co'
-SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNkZnV3aHpqd3dlZHVodXV1YWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIzNjkyMTAsImV4cCI6MjA1Nzk0NTIxMH0.GyF4JZDCj3XQaqH1ieD3cui__ALRd3T70jSHrRuqzP0'
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+##############################################################################################################
+
+# Connect to Redis
+redis_client = redis.StrictRedis(host="redis-cache-service", port=6379, decode_responses=True)
+pubsub = redis_client.pubsub()
+pubsub.subscribe("bidding_updates")
+
+async def listen_to_redis():
+    """Listen for messages on Redis Pub/Sub."""
+    while True:
+        try:
+            message = pubsub.get_message()
+            if message and message["type"] == "message":
+                auction_id, highest_bid = message["data"].split(":")
+                print(f"New bid received: Auction ID {auction_id}, Highest Bid {highest_bid}")
+                
+                # Update Supabase with the new highest bid
+                update_highest_bid_in_supabase(auction_id, highest_bid)
+                
+                # Broadcast update via WebSockets
+                await broadcast_to_clients(auction_id, highest_bid)
+        except Exception as e:
+            print(f"Error in Redis listener: {e}")
+        await asyncio.sleep(0.01)  # Avoid busy waiting
+
+
+def update_highest_bid_in_supabase(auction_id, highest_bid):
+    """Update the highest bid in Supabase."""
+    try:
+        supabase.table('marketplace').update({
+            'highest_bid': highest_bid
+        }).eq('auction_id', auction_id).execute()
+    except Exception as e:
+        print(f"Error updating Supabase: {e}")
+
+# Store active WebSocket connections
+connected_clients = set()
+
+async def broadcast_to_clients(auction_id, highest_bid):
+    """Broadcast message to all connected WebSocket clients."""
+    if connected_clients:  # Only send if there are active connections
+        message = f"{auction_id}:{highest_bid}"
+        disconnected_clients = []
+        for client in connected_clients:
+            try:
+                await client.send(message)
+            except Exception as e:
+                print(f"WebSocket error: {e}")
+                disconnected_clients.append(client)
+        
+        # Remove disconnected clients
+        for client in disconnected_clients:
+            connected_clients.remove(client)
+
+
+async def handle_websocket(websocket, path):
+    """Handle incoming WebSocket connections."""
+    connected_clients.add(websocket)
+    try:
+        async for _ in websocket:  # Keep connection open
+            pass
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+    finally:
+        connected_clients.remove(websocket)
+        
+##############################################################################################################
 
 @app.route('/')
 def home():
     return "Marketplace API is running!"
+
+async def main():
+    # Start WebSocket server
+    websocket_server = serve(handle_websocket, "0.0.0.0", 8765)
+    
+    # Start Redis listener and WebSocket server concurrently
+    await asyncio.gather(websocket_server, listen_to_redis())
+
+# Health check for websocket
+@app.route("/health", methods=["GET"])
+def health_check():
+    return jsonify({"status": "Marketplace API is running!"}), 200
+
 
 # Create a new listing
 @app.route('/api/marketplace/listings', methods=['POST'])
@@ -197,4 +283,19 @@ def delete_listing(listing_id):
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8001, debug=True)
+    app.run(host='0.0.0.0', port=5004, debug=True)
+
+
+# test feature for websockets
+if __name__ == "__main__":
+    import asyncio
+    from websockets import serve
+
+    async def main():
+        # Start WebSocket server
+        websocket_server = serve(handle_websocket, "0.0.0.0", 8765)
+        
+        # Start Redis listener and WebSocket server concurrently
+        await asyncio.gather(websocket_server, listen_to_redis())
+
+    asyncio.run(main())

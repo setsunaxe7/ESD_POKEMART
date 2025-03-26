@@ -1,10 +1,8 @@
 <script lang="ts" setup>
     import { useCards } from "../composables/inventory";
-    import { useListings } from "../composables/marketplace";
     import axios from "axios";
     import { ref, computed, onMounted } from "vue";
     const { cards, isLoading, error, fetchCards } = useCards();
-    const { listings, isListingLoading, listingError } = useListings();
 
     interface ListingData {
         seller_id: string;
@@ -67,6 +65,7 @@
         { label: "Fixed price", value: "direct" },
         { label: "Auction", value: "auction" },
     ];
+
     // Fetch cards when component mounts
     onMounted(fetchCards);
 
@@ -78,6 +77,7 @@
     const price = ref();
     const startingPrice = ref();
     const auctionDuration = ref();
+    const title = ref();
 
     const durationOptions = [
         { label: "3 days", value: 3 },
@@ -96,7 +96,6 @@
         }));
     });
 
-    // Add these new refs
     const imageFile = ref(null);
     const isSubmitting = ref(false);
     const submissionError = ref("");
@@ -138,7 +137,7 @@
             if (selectedType.value === "auction") {
                 auctionStartDate = new Date().toISOString();
                 auctionEndDate = new Date();
-                auctionEndDate.setDate(auctionEndDate.getDate() + auctionDuration.value);
+                auctionEndDate.setDate(auctionEndDate.getDate() + auctionDuration.value.value);
                 auctionEndDate = auctionEndDate.toISOString();
             }
 
@@ -146,7 +145,7 @@
             const listingData: ListingData = {
                 seller_id: "123e4567-e89b-12d3-a456-426614174000", // Replace with actual user ID from auth
                 card_id: selectedCard.value.value,
-                title: `${selectedCard.value.card.name} - ${selectedGrade.value.label}`,
+                title: title.value,
                 description: description.value,
                 price:
                     selectedType.value === "direct"
@@ -224,9 +223,15 @@
                                         class="w-full" />
                                 </div>
                                 <div class="flex flex-col gap-3">
+                                    <p class="font-medium">Listing Title</p>
+                                    <UInput
+                                        v-model="title"
+                                        placeholder="Add a title for your listing"></UInput>
+                                </div>
+                                <div class="flex flex-col gap-3">
                                     <p class="font-medium">Card Description (Optional)</p>
                                     <UTextarea
-                                        :rows="7"
+                                        :rows="3"
                                         v-model="description"
                                         variant="outline"
                                         placeholder="Add details about your card, such as any special features or minor flaws" />
@@ -252,10 +257,10 @@
                     </div>
                 </UCard>
                 <UCard class="p-4">
-                    <div class="flex flex-col gap-2">
+                    <div class="flex flex-col gap-2 w-1/2">
                         <h1 class="text-2xl font-bold">Card Image</h1>
                         <p class="text-gray-500">Upload a clear photo of your card</p>
-                        <UInput type="file" @change="handleFileChange"></UInput>
+                        <UInput class="mt-2" type="file" @change="handleFileChange"></UInput>
                     </div>
                 </UCard>
                 <UCard class="p-4">
@@ -267,36 +272,33 @@
                         <div class="flex flex-col gap-2 mt-2">
                             <p class="font-medium">Listing Type</p>
                             <URadioGroup
+                                class="mt-2"
                                 orientation="horizontal"
                                 v-model="selectedType"
                                 default-value="direct"
                                 :items="listingType"
                                 color="neutral" />
                         </div>
-                        <div class="flex flex-col gap-4 mt-4">
+                        <div class="flex flex-col gap-4 mt-2">
                             <!-- Direct listing options -->
-                            <div v-if="selectedType === 'direct'" class="flex flex-col gap-2">
+                            <div v-if="selectedType === 'direct'" class="flex flex-col gap-2 w-1/4">
                                 <p class="font-medium">Price</p>
-                                <div class="relative">
-                                    <UInput
-                                        leading-icon="i-material-symbols:attach-money"
-                                        v-model="price"
-                                        placeholder="0.00"
-                                        type="number" />
-                                </div>
+                                <UInput
+                                    leading-icon="i-material-symbols:attach-money"
+                                    v-model="price"
+                                    placeholder="0.00"
+                                    type="number" />
                             </div>
 
                             <!-- Auction listing options -->
-                            <div v-else class="flex flex-col gap-4">
+                            <div v-else class="flex flex-col gap-4 w-1/4">
                                 <div class="flex flex-col gap-2">
                                     <p class="font-medium">Starting Price</p>
-                                    <div class="relative">
-                                        <UInput
-                                            v-model="startingPrice"
-                                            leading-icon="i-material-symbols:attach-money"
-                                            type="number"
-                                            placeholder="0.00" />
-                                    </div>
+                                    <UInput
+                                        v-model="startingPrice"
+                                        leading-icon="i-material-symbols:attach-money"
+                                        type="number"
+                                        placeholder="0.00" />
                                 </div>
 
                                 <div class="flex flex-col gap-2">
