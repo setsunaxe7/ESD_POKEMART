@@ -83,6 +83,26 @@
 
         return `${days}d ${hours}h ${minutes}m`;
     });
+
+    const formattedPrice = computed(() => {
+        if (!listing.value?.price) return "$0.00";
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(listing.value.price);
+    });
+
+    // Implement placeBid
+    function placeBid() {
+        console.log("Place bid");
+    }
+
+    // Implement placeBid
+    function placeOrder() {
+        console.log("Place order");
+    }
 </script>
 
 <template>
@@ -90,23 +110,78 @@
         <UContainer class="mt-12 space-y-8">
             <!-- Loading state -->
             <UBreadcrumb :items="breadCrumb" />
-            <Loading v-if="isLoading"></Loading>
+            <Loading class="mt-24" v-if="isLoading"></Loading>
             <div v-else class="grid grid-cols-7 gap-8">
-                <div class="col-span-3 justify-content-center">
-                    <img :src="listing?.image_url" class="object-fit-contain" />
+                <div
+                    class="col-span-3 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                    <img
+                        :src="listing?.image_url"
+                        :alt="listing?.title"
+                        class="max-h-full max-w-full object-contain p-4" />
                 </div>
-                <div class="col-span-4">
-                    <UCard class="p-4">
+                <div class="col-span-4 space-y-6">
+                    <UCard>
                         <h1 class="font-semibold text-3xl mb-2">{{ listing?.title }}</h1>
                         <div v-if="listing?.description" class="flex flex-col">
-                            <p class="text-gray-500">Description</p>
+                            <p class="text-gray-500 text-sm">Description</p>
                             <p class="font-medium">{{ listing.description }}</p>
                         </div>
                         <USeparator class="my-4"></USeparator>
-                        <div class="grid grid-cols-2 grid-rows-2">
-                            <div class="flex flex-col">
-                                <p class="text-gray-500">Card Name</p>
+                        <div class="grid grid-cols-2 grid-rows-2 gap-4">
+                            <div class="flex flex-col col-span-1 row-span-1">
+                                <p class="text-gray-500 text-sm">Card Name</p>
                                 <p class="font-medium">{{ listingCard?.name }}</p>
+                            </div>
+                            <div class="flex flex-col col-span-1 row-span-1">
+                                <p class="text-gray-500 text-sm">Card Rarity</p>
+                                <p class="font-medium">{{ listingCard?.rarity }}</p>
+                            </div>
+                            <div class="flex flex-col col-span-1 row-span-1">
+                                <p class="text-gray-500 text-sm">Card Grade</p>
+                                <p class="font-medium">{{ listing?.grade }}</p>
+                            </div>
+                            <div class="flex flex-col col-span-1 row-span-1">
+                                <p class="text-gray-500 text-sm">Listing Type</p>
+                                <p class="font-medium capitalize">{{ listing?.type }}</p>
+                            </div>
+                        </div>
+                    </UCard>
+                    <UCard v-if="isAuction">
+                        <div class="grid grid-cols-2 grid-rows-2">
+                            <div class="flex flex-col col-span-1 row-span-1">
+                                <p class="text-gray-500 text-sm">Current Bid</p>
+                                <p class="font-medium capitalize">{{ formattedPrice }}</p>
+                            </div>
+                            <div class="flex flex-col col-span-1 row-span-1">
+                                <p class="text-gray-500 text-sm">Auction Ends In</p>
+                                <p class="font-medium capitalize">{{ timeRemaining }}</p>
+                            </div>
+                            <div class="flex flex-col col-span-1 row-span-1">
+                                <p class="text-gray-500 text-sm mb-2">Place Bid</p>
+                                <div class="w-full">
+                                    <UInput
+                                        class="w-3/4"
+                                        type="number"
+                                        v-model="bidAmount"></UInput>
+                                </div>
+                            </div>
+                            <div class="flex flex-col col-span-1 row-span-1 self-end">
+                                <UButton size="lg" @click="placeBid()" :block="true">
+                                    Place bid
+                                </UButton>
+                            </div>
+                        </div>
+                    </UCard>
+                    <UCard v-else>
+                        <div class="grid grid-cols-2 grid-rows-1">
+                            <div class="flex flex-col col-span-1">
+                                <p class="text-gray-500 text-sm">Listing Price</p>
+                                <p class="font-medium capitalize">{{ formattedPrice }}</p>
+                            </div>
+                            <div class="flex flex-col col-span-1 self-end">
+                                <UButton size="lg" @click="placeOrder()" :block="true">
+                                    Place Order
+                                </UButton>
                             </div>
                         </div>
                     </UCard>
