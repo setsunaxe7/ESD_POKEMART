@@ -20,7 +20,7 @@ export function useCards() {
     const fetchCards = async () => {
         try {
             isLoading.value = true;
-            const response = await axios.get("http://127.0.0.1:8000/inventory");
+            const response = await axios.get("http://127.0.0.1:8000/inventory/inventory");
             cards.value = response.data;
         } catch (err: any) {
             error.value = err.message || "Failed to fetch cards";

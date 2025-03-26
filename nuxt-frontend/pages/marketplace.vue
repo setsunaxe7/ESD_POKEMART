@@ -77,6 +77,30 @@ onMounted(() => {
     console.error("WebSocket error:", error);
   };
 });
+
+// Websocket setup to listen for price updates
+onMounted(() => {
+  const socket = new WebSocket("ws://localhost:8765");
+
+  socket.onmessage = (event) => {
+    const data = event.data.split(":");
+    const cardId = data[0];
+    const newPrice = data[1];
+
+    // Find the card in the list and update its price dynamically
+    const cardToUpdate = cards.value.find((card) => card.id === cardId);
+    if (cardToUpdate) {
+      cardToUpdate.price = parseFloat(newPrice);
+    }
+  };
+
+  socket.onerror = (error) => {
+    console.error("WebSocket error:", error);
+  };
+});
+
+
+
 </script>
 
 <template>
