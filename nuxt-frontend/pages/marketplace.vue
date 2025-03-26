@@ -1,32 +1,12 @@
 <script setup lang="ts">
+
 import { ref, onMounted } from "vue";
+import type { Listing } from "../types/listing";
 
 // Reactive variables for search, sorting, and pagination
 const searchQuery = ref("");
 const sortBy = ref("Relevance");
 const currentPage = ref(1);
-
-// Reactive variable to hold listings
-interface Listing {
-  auction_end_date: string | null;
-  auction_start_date: string | null;
-  bid_count: number;
-  card_id: string;
-  created_at: string;
-  description: string;
-  grade: number;
-  highest_bid: number | null;
-  highest_bidder_id: string | null;
-  id: string;
-  image_url: string | null;
-  price: number;
-  reserve_price: number | null;
-  seller_id: string;
-  status: string;
-  title: string;
-  type: string;
-  updated_at: string;
-}
 
 const listings = ref<Listing[]>([]);
 
@@ -124,7 +104,7 @@ onMounted(() => {
             <span>Footer Content</span>
           </div>
         </UDashboardSidebar>
-  
+
         <!-- Main Content -->
         <UContainer class="flex-grow p-4 overflow-y-auto">
           <!-- Search Input -->
@@ -134,7 +114,7 @@ onMounted(() => {
             icon="i-heroicons-magnifying-glass"
             class="w-full max-w mb-4"
           />
-  
+
           <!-- Dropdown Menu -->
           <UDropdownMenu
             :items="items"
@@ -155,12 +135,12 @@ onMounted(() => {
               class="mb-4"
             />
           </UDropdownMenu>
-  
+
           <!-- Marketplace Listings -->
           <UPageGrid>
             <!-- Dynamically create cards for each listing -->
             <UPageCard v-for="listing in listings" :key="listing.id">
-              <NuxtLink :to="'/product/' + listing.id">
+              <NuxtLink :to="'/listing/' + listing.id">
                 <img
                   :src="listing.image_url || 'https://placehold.co/400'"
                   alt="listing.title"
@@ -173,7 +153,7 @@ onMounted(() => {
               </NuxtLink>
             </UPageCard>
           </UPageGrid>
-  
+
           <!-- Pagination -->
           <div class="flex justify-center mt-6">
             <UPagination
@@ -187,4 +167,3 @@ onMounted(() => {
       </div>
     </UMain>
   </template>
-  

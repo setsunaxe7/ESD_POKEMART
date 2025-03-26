@@ -16,12 +16,7 @@
                 :ui="{container: 'lg:py-24'}" />
 
         <!-- Loading state -->
-        <div
-            v-if="isLoading"
-            class="flex-1 flex flex-col gap-4 justify-center items-center animate__animated animate__pulse animate__infinite">
-            <img src="../assets/img/loader.svg" alt="Loading" class="w-75 h-auto" />
-            <h2 class="text-xl font-bold text-gray-500">Loading...</h2>
-        </div>
+        <Loading v-if="isLoading"></Loading>
 
         <!-- Error state -->
         <div v-else-if="error" class="p-4 bg-red-100 text-red-700 rounded">
