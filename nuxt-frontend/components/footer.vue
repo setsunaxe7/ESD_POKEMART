@@ -27,7 +27,7 @@
 
         <UNavigationMenu :items="items" variant="link" />
 
-        <template #right>
+        <!-- <template #right>
             <UButton
                 icon="i-simple-icons-discord"
                 color="neutral"
@@ -49,6 +49,6 @@
                 to="https://github.com/nuxt/nuxt"
                 target="_blank"
                 aria-label="GitHub" />
-        </template>
+        </template> -->
     </UFooter>
 </template>
