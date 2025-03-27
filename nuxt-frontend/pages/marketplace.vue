@@ -2,6 +2,7 @@
 
 import { ref, onMounted } from "vue";
 import type { Listing } from "../types/listing";
+import { UButton, UButtonGroup } from "#components";
 
 // Reactive variables for search, sorting, and pagination
 const searchQuery = ref("");
@@ -9,7 +10,6 @@ const sortBy = ref("Relevance");
 const currentPage = ref(1);
 
 const listings = ref<Listing[]>([]);
-
 
 // Fetch Cards from API
 onMounted(async () => {
@@ -28,11 +28,27 @@ const items = ref([
     icon: "i-lucide-user",
   },
   {
-    label: "Price: Low to High",
+    label: "In Stock",
+    icon: "i-lucide-user",
+  },
+  {
+    label: "Grade",
+    icon: "i-lucide-user",
+  },
+  {
+    label: "Sort: A to Z",
+    icon: "i-lucide-user",
+  },
+  {
+    label: "Sort: Z to A",
+    icon: "i-lucide-user",
+  },
+  {
+    label: "$: Low to High",
     icon: "i-lucide-credit-card",
   },
   {
-    label: "Price: High to Low",
+    label: "$: High to Low",
     icon: "i-lucide-cog",
   },
 ]);
@@ -57,42 +73,47 @@ onMounted(() => {
     console.error("WebSocket error:", error);
   };
 });
-
-// Websocket setup to listen for price updates
-onMounted(() => {
-  const socket = new WebSocket("ws://localhost:8765");
-
-  socket.onmessage = (event) => {
-    const data = event.data.split(":");
-    const cardId = data[0];
-    const newPrice = data[1];
-
-    // Find the card in the list and update its price dynamically
-    const cardToUpdate = cards.value.find((card) => card.id === cardId);
-    if (cardToUpdate) {
-      cardToUpdate.price = parseFloat(newPrice);
-    }
-  };
-
-  socket.onerror = (error) => {
-    console.error("WebSocket error:", error);
-  };
-});
-
-
-
 </script>
 
 <template>
     <UMain>
       <div class="flex h-screen">
         <!-- Sidebar -->
-        <UDashboardSidebar
-          resizable
-          collapsible
-          class="w-1/4 bg-gray-100 h-full flex-shrink-0"
+        <div
+          class="hidden md:block w-40 h-full flex-shrink-0"
         >
+
+        <!-- Sidebar -->
           <div class="flex items-center gap-2 px-4 py-2">
+            <span class="font-bold text-lg">Filter</span>
+          </div>
+
+          <UNavigationMenu
+            :items="items"
+            :content="{
+              align: 'start',
+              side: 'bottom',
+              sideOffset: 8
+            }"
+            :ui="{
+              content: 'w-70'
+            }"
+            orientation = "vertical"
+            class = "mt-auto"
+          >
+          </UNavigationMenu>
+
+        </div>
+
+        <!-- Main Content -->
+        <UContainer class="flex-grow p-4 overflow-y-auto">
+          <USlideover
+          side="left"
+          title="Filters"
+        >
+          <UButton label="Filters" color="neutral" variant="subtle" class="block md:hidden"/>
+          <template #body>
+            <div class="flex items-center gap-2 px-4 py-2">
             <span class="font-bold text-lg">Menu</span>
           </div>
           <ul class="flex flex-col gap-2">
@@ -103,10 +124,8 @@ onMounted(() => {
           <div class="flex items-center gap-2 px-4 py-2">
             <span>Footer Content</span>
           </div>
-        </UDashboardSidebar>
-
-        <!-- Main Content -->
-        <UContainer class="flex-grow p-4 overflow-y-auto">
+          </template>
+        </USlideover>
           <!-- Search Input -->
           <UInput
             v-model="searchQuery"
@@ -114,27 +133,6 @@ onMounted(() => {
             icon="i-heroicons-magnifying-glass"
             class="w-full max-w mb-4"
           />
-
-          <!-- Dropdown Menu -->
-          <UDropdownMenu
-            :items="items"
-            :content="{
-              align: 'start',
-              side: 'bottom',
-              sideOffset: 8
-            }"
-            :ui="{
-              content: 'w-48'
-            }"
-          >
-            <UButton
-              label="Open"
-              icon="i-lucide-menu"
-              color="neutral"
-              variant="outline"
-              class="mb-4"
-            />
-          </UDropdownMenu>
 
           <!-- Marketplace Listings -->
           <UPageGrid>

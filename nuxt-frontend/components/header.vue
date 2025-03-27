@@ -1,23 +1,25 @@
 <script setup lang="ts">
-    const route = useRoute();
+const route = useRoute();
 
-    const items = computed(() => [
-        {
-            label: "Collection",
-            to: "/collection",
-            active: route.path.startsWith("/collection"),
-        },
-        {
-            label: "Marketplace",
-            to: "/marketplace",
-            active: route.path.startsWith("/marketplace"),
-        },
-        {
-            label: "Grading",
-            to: "/grading",
-            active: route.path.startsWith("/grading"),
-        },
-    ]);
+const items = computed(() => [
+    {
+        label: "Collection",
+        to: "/collection",
+        active: route.path.startsWith("/collection"),
+    },
+    {
+        label: "Marketplace",
+        to: "/marketplace",
+        active: route.path.startsWith("/marketplace"),
+    },
+    {
+        label: "Grading",
+        to: "/grading",
+        active: route.path.startsWith("/grading"),
+    },
+]);
+
+const user = useSupabaseUser()
 </script>
 
 <template>
@@ -34,7 +36,15 @@
         <template #right>
             <UColorModeButton />
 
-            <UTooltip text="Open on GitHub" :kbds="['meta', 'G']">
+            <template v-if="user">
+                <UButton to="/account">My Account</UButton>
+                <UButton to="/logout">Logout</UButton>
+            </template>
+            <template v-else>
+                <UButton to="/login">Login</UButton>
+            </template>
+
+            <!-- <UTooltip text="Open on GitHub" :kbds="['meta', 'G']">
                 <UButton
                     color="neutral"
                     variant="ghost"
@@ -42,7 +52,8 @@
                     target="_blank"
                     icon="i-simple-icons-github"
                     aria-label="GitHub" />
-            </UTooltip>
+            </UTooltip> -->
+
         </template>
     </UHeader>
 </template>
