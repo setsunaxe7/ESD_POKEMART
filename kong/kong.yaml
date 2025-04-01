@@ -29,4 +29,20 @@ plugins:
       strategy: memory
       content_type:
         - application/json
+  - name: cors
+    config:
+      origins:
+        - http://localhost:3000  # Allow requests from your frontend origin
+      methods:
+        - GET
+        - POST
+        - OPTIONS
+      headers:
+        - Accept
+        - Authorization
+        - Content-Type
+      exposed_headers:
+        - X-Custom-Header
+      credentials: true         # Allow credentials (cookies, Authorization headers)
+      max_age: 3600             # Cache preflight responses for 3600 seconds (1 hour)
 

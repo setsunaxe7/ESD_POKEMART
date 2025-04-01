@@ -3,8 +3,11 @@ from pymongo import MongoClient
 import redis
 import os
 import json
+from flask_cors import CORS
+
 
 app = Flask(__name__)
+CORS(app)
 
 # Load MongoDB connection string from environment variables
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
@@ -22,7 +25,7 @@ redis_client = redis.StrictRedis(host="redis-cache-service", port=6379, decode_r
 def place_bid():
     data = request.json
     auction_id = data.get("auctionId")
-    bid_amount = float(data.get("price"))  # Ensure it's a float
+    bid_amount = float(data.get("bidAmount"))  # Ensure it's a float
     bidder_id = data.get("buyerId")
 
     if not all([auction_id, bid_amount, bidder_id]):

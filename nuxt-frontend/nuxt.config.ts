@@ -14,7 +14,7 @@ export default defineNuxtConfig({
             login: '/login',
             callback: '/confirm',
             include: undefined,
-            exclude: ['/', '/signup', '/marketplace', '/collection', '/grading', '/listings/**'],
+            exclude: ['/', '/signup', '/marketplace', '/collection', '/grading', '/listing/**',],
             saveRedirectToCookie: true,
         }
     }

@@ -95,11 +95,43 @@
     });
 
     // Implement placeBid
-    function placeBid() {
-        console.log("Place bid");
+    async function placeBid() {
+        console.log("Attempting to place bid: $" + bidAmount.value);
+        try {
+            if (!bidAmount.value || bidAmount.value <= 0) {
+                console.error("Invalid bid amount");
+                return;
+            }
+
+            const response = await $fetch('http://localhost:8000/bid/bid', {
+                method: 'POST',
+                body: {
+                    auctionId: id, // ID of the listing
+                    bidAmount: bidAmount.value, // User's bid amount
+                    buyerId: 'USER_ID', // Replace with actual user ID (if available)
+                },
+            });
+
+            console.log("Bid placed successfully:", response);
+
+            const response2 = await $fetch(`http://localhost:8000/marketplace/api/marketplace/listings/${id}`, {
+                method: 'PUT',
+                body: {
+                    auctionId: id, // ID of the listing
+                    bidAmount: bidAmount.value, // User's bid amount
+                    buyerId: 'USER_ID', // Replace with actual user ID (if available)
+                },
+            });
+
+            console.log("Listing data updated successfully:", response2);
+
+        } catch (error) {
+            console.error("Error placing bid:", error);
+        }
+
     }
 
-    // Implement placeBid
+    // Implement placeOrder
     function placeOrder() {
         console.log("Place order");
     }
