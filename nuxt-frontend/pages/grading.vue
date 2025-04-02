@@ -1,6 +1,8 @@
 <script setup lang="ts">
-    import { ref, watch, onMounted } from 'vue';
+    import { ref, onMounted, computed, onUnmounted } from 'vue';
     import { useCards } from "../composables/inventory";
+    // websocket module
+    import WebSocketService from "../services/websocketService.js";
 
     // Get card info from Inventory ms
     const { cards, isLoading, error, fetchCards } = useCards();
@@ -19,21 +21,19 @@
     ];
 
     // CardNameArr
-    const cardName = ref([]);
+    const cardName = computed(() => {
+        if (!cards.value) return [];
+        
+        return cards.value.map((card) => ({
+            label: card.name + " [" + card.rarity + "]",
+            value: card.card_id,
+            card: card,
+        }));
+    });
 
     // Form input variables
-    const cardId = ref<string | undefined>(undefined);
-
-    // Filling up CardNameArr
-    watch(cards, (newCards) => {
-        if (newCards && newCards.length > 0) {
-            cardName.value = newCards.map(card => ({
-                label: card.name,
-                slot: card.card_id, 
-            }));
-
-            cardId.value = newCards[0].card_id;
-        }
+    const cardId = computed(() => {
+        return cardName.value.length > 0 ? cardName.value[0].value : "";
     });
 
     // Form input variables
@@ -43,6 +43,29 @@
     // errorMsg variables
     const isWrongInput = ref(false);
     const errMsg = ref("");
+
+    // connect to RabbitMQ
+    onMounted(() => {
+        WebSocketService.connect("ws://localhost:15674/ws");
+        // WebSocketService.subscribeToQueue("grading", onMessageReceived);
+    });
+
+    onUnmounted(() => {
+        WebSocketService.disconnect();
+    });
+
+    // RabbitMQ functions
+    const exchange = "grading_topic";
+
+    // Receive Message function
+    const onMessageReceived = (msg) => {
+        console.log("Received:", msg);
+        // update the status wtv
+    };
+    // Send message function
+    const sendMessage = (routingKey ,jsonStr) => {
+        WebSocketService.sendMessage(exchange, routingKey, jsonStr);
+    };
 
     // Submit form/ integration w backend
     function submitForm() {
@@ -72,11 +95,18 @@
         }
         console.log(postalCode.value);
         console.log(address.value);
+        const jsonStr = {
+            address: address.value,
+            cardID: cardId.value,
+            postalCode: postalCode.value,
+        }
+        sendMessage("create.grader", jsonStr);
         address.value = "";
         postalCode.value = "";
         isWrongInput.value = false;
         errMsg.value = "";
         return;
+        // add in unique ID
     }
 
     // Change Date from Inventory ms into Date String
@@ -93,7 +123,7 @@
 
 <template>
 <UMain>
-    <UContainer>
+    <UContainer class="grading-page">
         <!-- Top header -->
         <UPageSection
             title="Professional Card Grading"
@@ -124,12 +154,11 @@
                 </div>
                 <!-- Form -->
                 <UFormField label="Card ID">
-                    <USelect 
+                    <USelectMenu 
                         v-model="cardId" 
-                        value-key="slot" 
+                        value-key="value" 
                         :items="cardName" 
                         class="w-full" 
-                        required
                     />
                 </UFormField>
                 <br>
@@ -147,10 +176,6 @@
                         type="number"
                         placeholder="Enter your postal code" 
                         class="w-full"
-                        style="
-                            -webkit-appearance: none; 
-                            -moz-appearance: textfield; 
-                            appearance: none;"
                     />
                 </UFormField>
                 <br>
@@ -193,3 +218,16 @@
     </UContainer>
 </UMain>
 </template>
+    
+<style scoped>
+    /* Remove number input arrows ONLY for this page */
+    .grading-page :deep(input[type="number"])::-webkit-outer-spin-button,
+    .grading-page :deep(input[type="number"])::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    
+    .grading-page :deep(input[type="number"]) {
+        -moz-appearance: textfield;
+    }
+</style>

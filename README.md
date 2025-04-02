@@ -18,12 +18,14 @@ npm i
 npm run dev -- -o
 ```
 
-Backend: [WIP]
-<!-- Backend:<br>
+<!-- Backend: [WIP] -->
+Backend:<br>
 1) Open a terminal and run the following commands:
 ```
-cd backend
-``` -->
+cd kong
+docker compose up -d
+```
+Services might take a while to load.
 
 
 ## Technical Architecture Diagram

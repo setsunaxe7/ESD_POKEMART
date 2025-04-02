@@ -11,7 +11,6 @@ amqp_port = 5672
 exchange_name = "grading_topic"
 exchange_type = "topic"
 
-
 def create_exchange(hostname, port, exchange_name, exchange_type):
     print(f"Connecting to AMQP broker {hostname}:{port}...")
     # connect to the broker
@@ -92,4 +91,3 @@ create_queue(
     queue_name="notification",
     routing_key="*.notify",
 )
-

@@ -9,12 +9,13 @@ export default defineNuxtConfig({
     vite: {
         plugins: [tailwindcss()],
     },
+    services: [{ src: "~/services/websocketService.js", mode: "client" }],
     supabase: {
         redirectOptions: {
             login: '/login',
             callback: '/confirm',
-            include: undefined,
-            exclude: ['/', '/signup', '/marketplace', '/collection', '/grading', '/listing/**',],
+            include: ['/grading'],
+            exclude: ['/', '/signup', '/marketplace', '/collection', '/listing/**',],
             saveRedirectToCookie: true,
         }
     }

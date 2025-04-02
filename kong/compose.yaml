@@ -1,6 +1,8 @@
 volumes:
   pgdata:
     name: bulba_pgdata
+  rabbitmq_data:
+    name: esd_rabbitmq_data
 
 networks:
   bulba-net:
@@ -79,8 +81,44 @@ services:
     depends_on:
       - redis-cache-service
 
+  ####################################
+  # RabbitMQ: The messaging broker   
+  ####################################
+  rabbitmq:
+    build:
+      context: ../backend/rabbitmq/
+    container_name: rabbitmq
+    hostname: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "15674:15674"
+    volumes: 
+      - rabbitmq_data:/var/lib/rabbitmq
+      # - ../backend/rabbitmq/rabbitmq.config:/etc/rabbitmq/rabbitmq.config:ro
+      # - ../backend/rabbitmq/init/definitions.json:/etc/rabbitmq/definitions.json:ro
+    networks:
+      - bulba-net
 
+    # healthcheck:
+    #   test: ["CMD", "rabbitmqctl", "status"]
+    #   interval: 10s
+    #   retries: 7
+    #   start_period: 10s
 
+  # rabbitmq-setup:
+  #   build: 
+  #     context: ../backend/rabbitmq/setup/
+  #   container_name: esd-rabbit-setup
+  #   depends_on:
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   networks:
+  #     - bulba-net
+  #   environment:
+  #   - WAIT_FOR_ESD-RABBIT=true
+    
   #######################################
   # Redis Cache (For Bidding Microservice)
   #######################################
