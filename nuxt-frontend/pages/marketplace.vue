@@ -14,7 +14,7 @@ const listings = ref<Listing[]>([]);
 // Fetch Cards from API
 onMounted(async () => {
   try {
-    const response = await $fetch<Listing[]>("http://localhost:5004/api/marketplace/listings");
+    const response = await $fetch<Listing[]>("http://localhost:8000/marketplace/api/marketplace/listings");
     listings.value = response; // Assign API response to listings
   } catch (error) {
     console.error("Error fetching marketplace listings:", error);

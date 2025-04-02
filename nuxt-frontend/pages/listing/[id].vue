@@ -36,11 +36,11 @@
         try {
             isLoading.value = true;
             const response = await $fetch<Listing>(
-                `http://localhost:5004/api/marketplace/listings/${id}`
+                `http://localhost:8000/marketplace/api/marketplace/listings/${id}`
             );
             listing.value = response;
             const cardResponse = await $fetch<Card>(
-                `http://localhost:5003/inventory/${listing.value.card_id}`
+                `http://localhost:8000/inventory/inventory/${listing.value.card_id}`
             );
             listingCard.value = cardResponse;
             breadCrumb.value = [
@@ -94,6 +94,17 @@
         }).format(listing.value.price);
     });
 
+    const formattedHighestBid = computed(() => {
+        if (!listing.value?.highest_bid) return "$0.00";
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(listing.value.highest_bid);
+    });
+
+
     // Implement placeBid
     async function placeBid() {
         console.log("Attempting to place bid: $" + bidAmount.value);
@@ -108,18 +119,20 @@
                 body: {
                     auctionId: id, // ID of the listing
                     bidAmount: bidAmount.value, // User's bid amount
-                    buyerId: 'USER_ID', // Replace with actual user ID (if available)
+                    buyerId: '123e4567-e89b-12d3-a456-426614174001', // Replace with actual user ID (if available)
                 },
             });
 
             console.log("Bid placed successfully:", response);
+            const updatedBidCount = (listing.value.bid_count || 0) + 1;
 
             const response2 = await $fetch(`http://localhost:8000/marketplace/api/marketplace/listings/${id}`, {
                 method: 'PUT',
                 body: {
-                    auctionId: id, // ID of the listing
-                    bidAmount: bidAmount.value, // User's bid amount
-                    buyerId: 'USER_ID', // Replace with actual user ID (if available)
+                    id: id, // ID of the listing
+                    highest_bid: bidAmount.value, // User's bid amount
+                    highest_bidder_id: '123e4567-e89b-12d3-a456-426614174001', // Replace with actual user ID (if available)
+                    bid_count: updatedBidCount,
                 },
             });
 
@@ -182,7 +195,7 @@
                         <div class="grid grid-cols-2 grid-rows-2">
                             <div class="flex flex-col col-span-1 row-span-1">
                                 <p class="text-gray-500 text-sm">Current Bid</p>
-                                <p class="font-medium capitalize">{{ formattedPrice }}</p>
+                                <p class="font-medium capitalize">{{ listing?.bid_count > 0 ? formattedHighestBid : formattedPrice }}</p>
                             </div>
                             <div class="flex flex-col col-span-1 row-span-1">
                                 <p class="text-gray-500 text-sm">Auction Ends In</p>

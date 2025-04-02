@@ -7,10 +7,14 @@ import os
 import redis
 import asyncio
 import websockets
+from flask_socketio import SocketIO, emit
+from eventlet import monkey_patch
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
+monkey_patch()
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
 # Supabase configuration
 
@@ -252,6 +256,11 @@ def update_listing(listing_id):
 
         # Update the listing
         result = supabase.table('marketplace').update(data).eq('id', listing_id).execute()
+
+        socketio.emit('bid_update', {
+            'listing_id': listing_id,
+            'highest_bid': data['highest_bid']
+        })
 
         return jsonify(result.data[0]), 200
 

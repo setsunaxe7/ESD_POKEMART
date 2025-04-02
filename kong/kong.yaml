@@ -35,7 +35,9 @@ plugins:
         - http://localhost:3000  # Allow requests from your frontend origin
       methods:
         - GET
+        - PUT
         - POST
+        - DELETE
         - OPTIONS
       headers:
         - Accept

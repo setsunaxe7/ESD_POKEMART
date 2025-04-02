@@ -75,6 +75,9 @@ services:
       - ../backend/marketplace/.env  # Load environment variables from .env file
     ports:
       - "5004:5004"
+      - "8765:8765" # WebSocket port exposure
+    depends_on:
+      - redis-cache-service
 
 
 
