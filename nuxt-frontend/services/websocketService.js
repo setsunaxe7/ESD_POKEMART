@@ -26,6 +26,27 @@ class WebSocketService {
         this.client.activate();
     }
 
+    connect(url, queue, onMessageReceived) {
+        this.client = new Client({
+            brokerURL: url, // Example: "ws://localhost:15674/ws"
+            connectHeaders: {
+                login: "guest",
+                passcode: "guest"
+            },
+            debug: (str) => console.log(str),
+            onConnect: () => {
+                console.log("Connected to RabbitMQ WebSocket!");
+                this.subscribeToQueue(queue, onMessageReceived);
+            },
+            onStompError: (frame) => {
+                console.error("Broker error: ", frame.headers["message"]);
+            },
+            reconnectDelay: 5000, // Auto-reconnect
+        });
+
+        this.client.activate();
+    }
+
     subscribeToQueue(queue, onMessageReceived) {
         this.client.subscribe(`/queue/${queue}`, (message) => {
             if (message.body) {

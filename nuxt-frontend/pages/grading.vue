@@ -46,8 +46,8 @@
 
     // connect to RabbitMQ
     onMounted(() => {
+        // WebSocketService.connect("ws://localhost:15674/ws", "grading", onMessageReceived);
         WebSocketService.connect("ws://localhost:15674/ws");
-        // WebSocketService.subscribeToQueue("grading", onMessageReceived);
     });
 
     onUnmounted(() => {

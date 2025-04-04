@@ -28,6 +28,11 @@ docker compose up -d
 Services might take a while to load.
 
 
+If amqp_setup.py isn't being updated in docker container run this instead
+```
+docker compose up --build --force-recreate -d
+```
+
 ## Technical Architecture Diagram
 [WIP]
 <!-- <img width="" alt="architecture diagram" src=""> -->
