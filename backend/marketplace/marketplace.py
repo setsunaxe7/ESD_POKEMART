@@ -6,15 +6,12 @@ import uuid
 import os
 import redis
 import asyncio
-import websockets
-from flask_socketio import SocketIO, emit
-from eventlet import monkey_patch
+
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
-monkey_patch()
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+
 
 # Supabase configuration
 
@@ -57,49 +54,10 @@ def update_highest_bid_in_supabase(auction_id, highest_bid):
     except Exception as e:
         print(f"Error updating Supabase: {e}")
 
-# Store active WebSocket connections
-connected_clients = set()
-
-async def broadcast_to_clients(auction_id, highest_bid):
-    """Broadcast message to all connected WebSocket clients."""
-    if connected_clients:  # Only send if there are active connections
-        message = f"{auction_id}:{highest_bid}"
-        disconnected_clients = []
-        for client in connected_clients:
-            try:
-                await client.send(message)
-            except Exception as e:
-                print(f"WebSocket error: {e}")
-                disconnected_clients.append(client)
-        
-        # Remove disconnected clients
-        for client in disconnected_clients:
-            connected_clients.remove(client)
-
-
-async def handle_websocket(websocket, path):
-    """Handle incoming WebSocket connections."""
-    connected_clients.add(websocket)
-    try:
-        async for _ in websocket:  # Keep connection open
-            pass
-    except Exception as e:
-        print(f"WebSocket error: {e}")
-    finally:
-        connected_clients.remove(websocket)
-        
-##############################################################################################################
 
 @app.route('/')
 def home():
     return "Marketplace API is running!"
-
-async def main():
-    # Start WebSocket server
-    websocket_server = serve(handle_websocket, "0.0.0.0", 8765)
-    
-    # Start Redis listener and WebSocket server concurrently
-    await asyncio.gather(websocket_server, listen_to_redis())
 
 # Health check for websocket
 @app.route("/health", methods=["GET"])
@@ -257,11 +215,6 @@ def update_listing(listing_id):
         # Update the listing
         result = supabase.table('marketplace').update(data).eq('id', listing_id).execute()
 
-        socketio.emit('bid_update', {
-            'listing_id': listing_id,
-            'highest_bid': data['highest_bid']
-        })
-
         return jsonify(result.data[0]), 200
 
     except Exception as e:
@@ -293,18 +246,3 @@ def delete_listing(listing_id):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5004, debug=True)
-
-
-# test feature for websockets
-if __name__ == "__main__":
-    import asyncio
-    from websockets import serve
-
-    async def main():
-        # Start WebSocket server
-        websocket_server = serve(handle_websocket, "0.0.0.0", 8765)
-        
-        # Start Redis listener and WebSocket server concurrently
-        await asyncio.gather(websocket_server, listen_to_redis())
-
-    asyncio.run(main())

@@ -3,6 +3,8 @@
 import { ref, onMounted } from "vue";
 import type { Listing } from "../types/listing";
 import { UButton, UButtonGroup } from "#components";
+import WebSocketService from "../services/websocketService.js";
+
 
 // Reactive variables for search, sorting, and pagination
 const searchQuery = ref("");
@@ -16,6 +18,21 @@ onMounted(async () => {
   try {
     const response = await $fetch<Listing[]>("http://localhost:8000/marketplace/api/marketplace/listings");
     listings.value = response; // Assign API response to listings
+
+    // Connect to WebSocket server
+    WebSocketService.connect("ws://localhost:15674/ws");
+    WebSocketService.subscribeToBids((message) => {
+      const { listing_id, highest_bid } = message;
+
+      // Find the relevant listing and update its highest_bid dynamically
+      const listingToUpdate = listings.value.find(
+        (listing) => listing.id === listing_id && listing.type === "auction"
+      );
+      if (listingToUpdate) {
+        listingToUpdate.highest_bid = highest_bid;
+      }
+    });
+
   } catch (error) {
     console.error("Error fetching marketplace listings:", error);
   }
@@ -52,27 +69,7 @@ const items = ref([
     icon: "i-lucide-cog",
   },
 ]);
-
-// WebSocket setup to listen for price updates
-onMounted(() => {
-  const socket = new WebSocket("ws://localhost:8765");
-
-  socket.onmessage = (event) => {
-    const data = event.data.split(":");
-    const cardId = data[0];
-    const newPrice = data[1];
-
-    // Find the card in the list and update its price dynamically
-    const cardToUpdate = listings.value.find((card) => card.id === cardId);
-    if (cardToUpdate) {
-      cardToUpdate.price = parseFloat(newPrice);
-    }
-  };
-
-  socket.onerror = (error) => {
-    console.error("WebSocket error:", error);
-  };
-});
+    
 </script>
 
 <template>
@@ -147,7 +144,23 @@ onMounted(() => {
                 />
                 <h3 class="text-lg font-medium mt-2">{{ listing.title }}</h3>
                 <p class="text-sm text-gray-500">{{ listing.description }}</p>
-                <p class="text-primary font-bold">${{ listing.price }}</p>
+                <p class="text-primary font-bold"> 
+                  {{
+                    listing.type === 'auction'
+                      ? new Intl.NumberFormat("en-US", {
+                          style: "currency",
+                          currency: "USD",
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(listing.highest_bid || 0)
+                      : new Intl.NumberFormat("en-US", {
+                          style: "currency",
+                          currency: "USD",
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(listing.price || 0)
+                  }}
+                </p>
               </NuxtLink>
             </UPageCard>
           </UPageGrid>

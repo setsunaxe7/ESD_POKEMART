@@ -60,6 +60,10 @@ class WebSocketService {
     //     }
     // }
 
+    subscribeToBids(onMessageReceived) {
+        this.subscribeToExchange("bidding_exchange", "", onMessageReceived);
+    }
+
     disconnect() {
         if (this.client) {
             this.client.deactivate();

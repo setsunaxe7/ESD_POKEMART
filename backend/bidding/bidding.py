@@ -3,6 +3,7 @@ from pymongo import MongoClient
 import redis
 import os
 import json
+import pika
 from flask_cors import CORS
 
 
@@ -10,7 +11,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load MongoDB connection string from environment variables
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
 
 # Database & Collection
@@ -19,6 +20,22 @@ bids_collection = db["bids"]  # Collection Name
 
 # Redis Connection
 redis_client = redis.StrictRedis(host="redis-cache-service", port=6379, decode_responses=True)
+
+
+# AMQP message for updating bid data
+def send_bid_update(listing_id, highest_bid):
+    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+    channel = connection.channel()
+
+    # Declare exchange
+    channel.exchange_declare(exchange='bidding_exchange', exchange_type='fanout')
+
+    # Publish bid update
+    message = json.dumps({'listing_id': listing_id, 'highest_bid': highest_bid})
+    channel.basic_publish(exchange='bidding_exchange', routing_key='', body=message)
+    
+    print(f"Sent bid update: {message}")
+    connection.close()
 
 # POST route to place a bid
 @app.route("/bid", methods=["POST"])
@@ -42,12 +59,14 @@ def place_bid():
     new_bid = {
         "auctionId": auction_id,
         "buyerId": bidder_id,
-        "price": bid_amount
+        "bidAmount": bid_amount
     }
     bids_collection.insert_one(new_bid)
 
     # Update Redis cache with the new highest bid
-    redis_client.set(f"highest_bid:{auction_id}", bid_amount)
+    redis_client.set(auction_id, bid_amount)
+    # send_bid_update(data[auction_id], data[bid_amount])
+
 
     return jsonify({"message": "Bid placed successfully", "newHighest": bid_amount}), 201
 

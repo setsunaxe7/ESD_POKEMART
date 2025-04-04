@@ -77,9 +77,8 @@ services:
       - ../backend/marketplace/.env  # Load environment variables from .env file
     ports:
       - "5004:5004"
-    #   - "8765:8765" # WebSocket port exposure
-    # depends_on:
-    #   - redis-cache-service
+    depends_on:
+      - redis-cache-service
 
   ####################################
   # RabbitMQ: The messaging broker   
@@ -116,7 +115,7 @@ services:
   #######################################
   # Redis Cache (For Bidding Microservice)
   #######################################
-  redis-cache:
+  redis-cache-service:
     image: redis:latest
     container_name: redis-cache-service
     restart: always

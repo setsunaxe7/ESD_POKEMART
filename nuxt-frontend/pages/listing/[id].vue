@@ -3,6 +3,14 @@
     import type { Listing } from "~/types/listing";
     import type { BreadcrumbItem } from "@nuxt/ui";
     import type { Card } from "~/types/card";
+    import WebSocketService from "../../services/websocketService.js";
+
+    interface BidUpdateMessage {
+        listing_id: string;
+        highest_bid: number;
+    }
+
+
 
     // Get the route to access the ID parameter
     const route = useRoute();
@@ -14,6 +22,7 @@
     const error = ref<string | null>(null);
     const bidAmount = ref<number | null>(null);
     const listingCard = ref<Card>();
+    const highestBid = ref<number | null>(null);
 
     let breadCrumb = ref<BreadcrumbItem[]>([
         {
@@ -59,12 +68,33 @@
                     to: "/listing/" + id,
                 },
             ];
+
+            highestBid.value = listing.value.highest_bid || 0;
+
+            // Connect to WebSocket and subscribe to bid updates
+            WebSocketService.connect("ws://localhost:15674/ws");
+            WebSocketService.subscribeToBids((message: BidUpdateMessage) => {
+            if (message.listing_id === id) {
+                // Update the highest bid dynamically when a new bid is received
+                highestBid.value = message.highest_bid;
+            }
+            });
+
         } catch (err: any) {
             error.value = err.message || "Failed to load listing";
             console.error(error.value);
         } finally {
             isLoading.value = false;
         }
+    });
+
+    // onMounted(() => {
+    //     WebSocketService.connect("ws://localhost:15674/ws");
+    //     // WebSocketService.subscribeToQueue("grading", onMessageReceived);
+    // });
+
+    onUnmounted(() => {
+        WebSocketService.disconnect();
     });
 
     // Computed properties
@@ -95,7 +125,7 @@
     });
 
     const formattedHighestBid = computed(() => {
-        if (!listing.value?.highest_bid) return "$0.00";
+        if (!highestBid.value) return "$0.00";
         return new Intl.NumberFormat("en-US", {
             style: "currency",
             currency: "USD",
@@ -195,7 +225,7 @@
                         <div class="grid grid-cols-2 grid-rows-2">
                             <div class="flex flex-col col-span-1 row-span-1">
                                 <p class="text-gray-500 text-sm">Current Bid</p>
-                                <p class="font-medium capitalize">{{ listing?.bid_count > 0 ? formattedHighestBid : formattedPrice }}</p>
+                                <p class="font-medium capitalize">{{ listing?.type == "auction" ? formattedHighestBid : formattedPrice }}</p>
                             </div>
                             <div class="flex flex-col col-span-1 row-span-1">
                                 <p class="text-gray-500 text-sm">Auction Ends In</p>
