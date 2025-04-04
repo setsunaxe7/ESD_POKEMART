@@ -2,6 +2,7 @@
 import * as v from 'valibot'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
+const isButtonPressed = ref(false)
 const schema = v.object({
     email: v.pipe(v.string(), v.email('Invalid email')),
 })
@@ -24,20 +25,29 @@ async function sign_in() {
   })
   if (error) console.log(error)
 }
-</script>
-<template>
-    <UMain>
-        <UContainer>
-            <h1>login</h1>
-            <UForm :schema="schema" :state="state" class="space-y-4" @submit="sign_in">
-                <UFormField label="Email" name="email">
-                <UInput v-model="state.email" />
-                </UFormField>
 
-                <UButton type="submit">
-                Submit
-                </UButton>
-            </UForm>
-        </UContainer>
-    </UMain>
+// Handle button click animation
+const handleButtonClick = () => {
+  isButtonPressed.value = true
+}
+</script>
+
+<template>
+  <UMain>
+    <UContainer class="max-w-md mx-auto py-10">
+      <h1 class="text-2xl font-bold mb-6">Login</h1>
+      <UForm :schema="schema" :state="state" class="space-y-4" @submit="sign_in">
+          <UFormField label="Email" name="email">
+            <UInput v-model="state.email" placeholder="you@email.com" class="w-full max-w"/>
+          </UFormField>
+
+          <UButton type="submit" @click="handleButtonClick" class="w-full max-w justify-center">
+          Submit
+          </UButton>
+      </UForm>
+      <div v-if="isButtonPressed">
+        Magic Link sent to your email. Click on the link in the email to log in!
+      </div>
+    </UContainer>
+  </UMain>
 </template>
