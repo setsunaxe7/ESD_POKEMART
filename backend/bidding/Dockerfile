@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 EXPOSE 5002
 
 # Command to run the bidding microservice
-CMD ["python", "bidding.py"]
+CMD ["python", "bidding.py", "amqp_lib.py"]

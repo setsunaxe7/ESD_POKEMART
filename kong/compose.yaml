@@ -3,6 +3,7 @@ volumes:
     name: bulba_pgdata
   rabbitmq_data:
     name: esd_rabbitmq_data
+    # external: true
 
 networks:
   bulba-net:
@@ -51,6 +52,10 @@ services:
       - ../backend/bidding/.env  # Load environment variables from .env file
     ports:
       - "5002:5002"
+    # depends_on:
+    #  rabbitmq:
+    #   condition: service_completed_successfully
+
 
   # Inventory
   inventory-service:
