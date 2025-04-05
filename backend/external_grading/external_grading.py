@@ -2,6 +2,9 @@
 import os
 import amqp_lib
 import json
+from dotenv import load_dotenv
+from supabase import create_client
+
 
 rabbit_host = "rabbitmq"
 rabbit_port = 5672
@@ -9,6 +12,11 @@ exchange_name = "grading_topic"
 exchange_type = "topic"
 queue_name = "external_grading"
 
+# Supabase configuration
+load_dotenv()
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key= os.getenv("SUPABASE_KEY")
+supabase = create_client(supabase_url, supabase_key)
 
 def callback(channel, method, properties, body):
     # required signature for the callback; no return
@@ -18,6 +26,15 @@ def callback(channel, method, properties, body):
         # Convert result to a JSON string before publishing
         result["cardStatus"] = "received"
         result_json = json.dumps(result)
+        
+        # # db
+        # response = supabase.table("grading").insert(data).execute()
+        
+        # if response.error is None:
+        #     print("Data inserted successfully:", response.data)
+        # else:
+        #     print("Error inserting data:", response.error)
+        
         
         channel.basic_publish(
             exchange=exchange_name, routing_key="externalGrader.update", body=result_json

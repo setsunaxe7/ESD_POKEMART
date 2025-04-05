@@ -1,14 +1,16 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask import jsonify
+from supabase import create_client
+from dotenv import load_dotenv
 import json
-import pika
 import sys, os
-import uuid  # To generate unique grading IDs
-
+import uuid  
 import amqp_lib
 
-app = Flask(__name__)
-CORS(app)
+# Supabase configuration
+load_dotenv()
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key= os.getenv("SUPABASE_KEY")
+supabase = create_client(supabase_url, supabase_key)
 
 # RabbitMQ Config
 rabbit_host = "rabbitmq"
@@ -34,10 +36,7 @@ def connectAMQP():
         print(f"  Unable to connect to RabbitMQ.\n     {exception=}\n")
         exit(1)
 
-# Creation function 
-# Suppose to take in bKey .create
-# comes from websocket/ui
-
+# Creation function, comes from websocket/ui
 def grade_card(channel, method, properties, body):
     result = json.loads(body)
     try:
@@ -47,13 +46,32 @@ def grade_card(channel, method, properties, body):
         cardID = result["cardID"]
         address = result["address"]
         postalCode = result["postalCode"]
+        userID = result["userID"]
 
         if not all([cardID, address, postalCode]):
             return jsonify({"code": 400, "message": "Missing required fields"}), 400
 
         # Generate unique grading ID
         gradingID = str(uuid.uuid4())
+        
+        # init data for db
+        data = {
+            "userID": userID,
+            "gradingID": gradingID,
+            "cardID": cardID,
+            "address": address,
+            "status": "Created",
+            "postalCode": postalCode, 
+        }
 
+        # Upload to Supabase storage
+        response = supabase.table("grading").insert(data).execute()
+        
+        if response.error is None:
+            print("Data inserted successfully:", response.data)
+        else:
+            print("Error inserting data:", response.error)
+        
         # Default card status
         cardStatus = "Pending Grading"
         
@@ -63,10 +81,6 @@ def grade_card(channel, method, properties, body):
         
         # Send to External Grader and Notify User
         result = sendGradingAndNotify(gradingID, cardID, cardStatus, address, postalCode)
-
-        # Manually push Flask context
-        with app.app_context():
-            return jsonify(result), result["code"]
 
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -90,7 +104,7 @@ def sendGradingAndNotify(gradingID, cardID, cardStatus, address, postalCode):
         # Publish to RabbitMQ
         print("  Publishing grading request to RabbitMQ...")
         channel.basic_publish(
-            exchange=exchange_name, routing_key="create.externalGrader", body=gradingMessage
+            exchange=exchange_name, routing_key="create.externalGrading", body=gradingMessage
         )
         
         notificationMessage = json.dumps({
@@ -129,7 +143,7 @@ def callback(channel, method, properties, body):
         routing_key = method.routing_key  # Get the routing key
 
         # Log or print the routing key and message
-        if "grader" in routing_key:
+        if "grading" in routing_key:
             grade_card(channel, method, properties, body)
         else:
             print(f"Received message with routing key: {routing_key}")

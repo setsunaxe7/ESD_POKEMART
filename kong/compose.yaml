@@ -93,10 +93,10 @@ services:
     restart: always
     networks:
       - bulba-net
-    # env_file:
-      # - ../backend/grading/.env  # Load environment variables from .env file
-    ports:
-      - "5005:5005"
+    env_file:
+      - ../backend/grading/.env  # Load environment variables from .env file
+    # ports:
+    #   - "5005:5005"
     depends_on:
       - rabbitmq-setup
 
@@ -110,8 +110,8 @@ services:
       - bulba-net
     # env_file:
       # - ../backend/external_grading/.env  # Load environment variables from .env file
-    ports:
-      - "5006:5006"
+    # ports:
+    #   - "5006:5006"
     depends_on:
       - rabbitmq-setup
 
@@ -125,8 +125,8 @@ services:
       - bulba-net
     # env_file:
       # - ../backend/delivery/.env  # Load environment variables from .env file
-    ports:
-      - "5007:5007"
+    # ports:
+    #   - "5007:5007"
     depends_on:
       - rabbitmq-setup
 

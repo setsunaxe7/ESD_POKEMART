@@ -12,7 +12,7 @@ amqp_port = 5672
 amqp_user = "guest"     # Default RabbitMQ username
 amqp_password = "guest" # Default RabbitMQ password
 
-exchange_name = "main"
+exchange_name = "grading_topic"
 exchange_type = "topic"
 
 # Creates the exchange
@@ -83,29 +83,29 @@ try:
         routing_key="*.grading",
     )
 
-    # # Add .update binding key to grading queue
-    # create_queue(
-    #     channel=channel,
-    #     exchange_name=exchange_name,
-    #     queue_name="grading",
-    #     routing_key="*.update",
-    # )
+    # Add .update binding key to grading queue
+    create_queue(
+        channel=channel,
+        exchange_name=exchange_name,
+        queue_name="grading",
+        routing_key="*.update",
+    )
     
-    # # Create delivery queue
-    # create_queue(
-    #     channel=channel,
-    #     exchange_name=exchange_name,
-    #     queue_name="delivery",
-    #     routing_key="*.delivery",
-    # )
+    # Create delivery queue
+    create_queue(
+        channel=channel,
+        exchange_name=exchange_name,
+        queue_name="delivery",
+        routing_key="*.delivery",
+    )
     
-    # # Create notification queue
-    # create_queue(
-    #     channel=channel,
-    #     exchange_name=exchange_name,
-    #     queue_name="notification",
-    #     routing_key="*.notify",
-    # )
+    # Create notification queue
+    create_queue(
+        channel=channel,
+        exchange_name=exchange_name,
+        queue_name="notification",
+        routing_key="*.notify",
+    )
 
     # Create auction queue
     create_queue(
