@@ -107,6 +107,14 @@ try:
         routing_key="*.notify",
     )
 
+    # Create auction queue
+    create_queue(
+        channel=channel,
+        exchange_name=exchange_name,
+        queue_name="auction",
+        routing_key="*.auction",
+    )
+
 finally:
     # Close the connection
     if 'channel' in locals() and channel.is_open:

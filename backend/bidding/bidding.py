@@ -5,6 +5,7 @@ import os
 import json
 import pika
 from flask_cors import CORS
+import amqp_lib
 
 
 app = Flask(__name__)
@@ -21,21 +22,40 @@ bids_collection = db["bids"]  # Collection Name
 # Redis Connection
 redis_client = redis.StrictRedis(host="redis-cache-service", port=6379, decode_responses=True)
 
+###############################################################################################
+
+# RabbitMQ Config
+rabbit_host = "rabbitmq"  # Use "rabbitmq" if running inside Docker
+rabbit_port = 5672
+exchange_name = "main"  # Topic exchange declared in amqp_setup.py
+exchange_type = "topic"
 
 # AMQP message for updating bid data
 def send_bid_update(listing_id, highest_bid):
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-    channel = connection.channel()
+    try:
+        # Establish connection to RabbitMQ using amqp_lib
+        connection, channel = amqp_lib.connect(
+            hostname=rabbit_host,
+            port=rabbit_port,
+            exchange_name=exchange_name,
+            exchange_type=exchange_type,
+        )
 
-    # Declare exchange
-    channel.exchange_declare(exchange='bidding_exchange', exchange_type='fanout')
+        # Publish bid update to RabbitMQ with a routing key
+        routing_key = f"update.auction"  # Routing key for auction updates
+        message = json.dumps({'listing_id': listing_id, 'highest_bid': highest_bid})
+        channel.basic_publish(exchange=exchange_name, routing_key=routing_key, body=message)
 
-    # Publish bid update
-    message = json.dumps({'listing_id': listing_id, 'highest_bid': highest_bid})
-    channel.basic_publish(exchange='bidding_exchange', routing_key='', body=message)
-    
-    print(f"Sent bid update: {message}")
-    connection.close()
+        print(f"Sent bid update: {message} with routing key: {routing_key}")
+    except Exception as e:
+        print(f"Error sending bid update: {e}")
+    finally:
+        # Close the connection and channel using amqp_lib
+        amqp_lib.close(connection, channel)
+
+
+###############################################################################################
+
 
 # POST route to place a bid
 @app.route("/bid", methods=["POST"])
@@ -65,7 +85,7 @@ def place_bid():
 
     # Update Redis cache with the new highest bid
     redis_client.set(auction_id, bid_amount)
-    # send_bid_update(data[auction_id], data[bid_amount])
+    send_bid_update(auction_id, bid_amount)
 
 
     return jsonify({"message": "Bid placed successfully", "newHighest": bid_amount}), 201
@@ -82,9 +102,9 @@ def get_highest_bid(auction_id):
 
     # If not cached, fetch from MongoDB
     highest_bid_entry = bids_collection.find_one(
-        {"auctionId": auction_id}, sort=[("price", -1)]
+        {"auctionId": auction_id}, sort=[("bidAmount", -1)]
     )
-    highest_bid = highest_bid_entry["price"] if highest_bid_entry else 0
+    highest_bid = highest_bid_entry["bidAmount"] if highest_bid_entry else 0
 
     # Store in Redis for future use
     redis_client.set(f"highest_bid:{auction_id}", highest_bid)

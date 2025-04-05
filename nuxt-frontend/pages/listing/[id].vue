@@ -73,11 +73,12 @@
 
             // Connect to WebSocket and subscribe to bid updates
             WebSocketService.connect("ws://localhost:15674/ws");
-            WebSocketService.subscribeToBids((message: BidUpdateMessage) => {
-            if (message.listing_id === id) {
-                // Update the highest bid dynamically when a new bid is received
-                highestBid.value = message.highest_bid;
-            }
+            WebSocketService.subscribeToExchange("main", "*.auction", (message) => {
+                console.log("this happens")
+                if (message.listing_id === id) {
+                    highestBid.value = message.highest_bid;
+                    console.log(`Highest bid updated to ${message.highest_bid}`);
+                }
             });
 
         } catch (err: any) {
