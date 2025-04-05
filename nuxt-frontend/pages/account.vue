@@ -8,7 +8,6 @@ const user = useSupabaseUser()
 const toast = useToast()
 const loading = ref(true)
 const updating = ref(false)
-const userData = ref(null)
 const displayName = ref('')
 const isButtonPressed = ref(false)
 const saveSuccess = ref(false)
@@ -31,18 +30,22 @@ const fetchUserData = async () => {
       return
     }
     
-    const { data: { user: userData }, error } = await supabase.auth.getUser()
+    // Get user data from Supabase
+    const { data, error } = await supabase.auth.getUser()
     
     if (error) {
       throw error
     }
     
-    if (userData) {
-      // Store the full user data
-      userData.value = userData
+    if (data && data.user) {
+      console.log('User data from Supabase:', data.user)
       
-      // Set the display name from user metadata
-      displayName.value = userData.display_name || ''
+      // Extract display name from raw_user_meta_data
+      if (data.user.user_metadata && data.user.user_metadata.display_name) {
+        displayName.value = data.user.user_metadata.display_name
+      } else {
+        displayName.value = ''
+      }
     }
   } catch (error) {
     console.error('Error fetching user data:', error)
@@ -64,8 +67,8 @@ const updateDisplayName = async () => {
     
     if (!user.value) return
     
-    // Update user metadata with the display name
-    const { error } = await supabase.auth.updateUser({
+    // Update using Supabase Auth API - specifically targeting the metadata
+    const { data, error } = await supabase.auth.updateUser({
       data: { 
         display_name: displayName.value 
       }
@@ -73,13 +76,10 @@ const updateDisplayName = async () => {
     
     if (error) throw error
     
-    // Refresh user data to get the updated metadata
-    const { data: { user: updatedUser }, error: refreshError } = await supabase.auth.getUser()
+    console.log('Update response:', data)
     
-    if (refreshError) throw refreshError
-    
-    // Update local user data
-    userData.value = updatedUser
+    // Refresh user data
+    await fetchUserData()
     
     toast.add({
       title: 'Display name updated',
@@ -132,7 +132,7 @@ onMounted(() => {
               <div class="col-span-2 text-sm text-gray-600 truncate">{{ user?.id }}</div>
               
               <div class="font-medium">Display Name:</div>
-              <div class="col-span-2">{{ userData?.user_metadata?.display_name || 'Not set' }}</div>
+              <div class="col-span-2">{{ displayName || 'Not set' }}</div>
             </div>
           </div>
 

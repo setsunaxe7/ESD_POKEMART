@@ -2,7 +2,7 @@
 
 import { ref, onMounted } from "vue";
 import type { Listing } from "../types/listing";
-import { UButton, UButtonGroup } from "#components";
+import { UButton } from "#components";
 import WebSocketService from "../services/websocketService.js";
 
 
