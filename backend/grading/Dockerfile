@@ -10,8 +10,8 @@ COPY . .
 # Install required Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose the port used by the bidding microservice
-EXPOSE 5002
+# Expose the port used by the inventory microservice
+EXPOSE 5005
 
-# Command to run the bidding microservice
-CMD ["python", "bidding.py"]
+# Command to run the inventory microservice
+CMD ["python", "grading.py"]

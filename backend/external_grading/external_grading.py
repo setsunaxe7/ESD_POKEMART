@@ -3,25 +3,30 @@ import os
 import amqp_lib
 import json
 
-rabbit_host = "localhost"
+rabbit_host = "rabbitmq"
 rabbit_port = 5672
 exchange_name = "grading_topic"
 exchange_type = "topic"
-queue_name = "notification"
+queue_name = "external_grading"
 
 
 def callback(channel, method, properties, body):
     # required signature for the callback; no return
     try:
         result = json.loads(body)
-        print(f"Notification message (JSON): {result}")
+        result_pure = json.loads(body)
+        # Convert result to a JSON string before publishing
+        result["cardStatus"] = "received"
+        result_json = json.dumps(result)
+        
+        channel.basic_publish(
+            exchange=exchange_name, routing_key="externalGrader.update", body=result_json
+        )
+        print(f"External Grader message (JSON): {result_pure}")
     except Exception as e:
         print(f"Unable to parse JSON: {e=}")
-        print(f"Notification message: {body}")
+        print(f"External Grader message: {body}")
     print()
-
-
-# here suppose to shoot out to ui thru websocket but notification done by outsystem
 
 if __name__ == "__main__":
     print(f"This is {os.path.basename(__file__)} - amqp consumer...")

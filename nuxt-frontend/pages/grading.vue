@@ -100,7 +100,7 @@
             cardID: cardId.value,
             postalCode: postalCode.value,
         }
-        sendMessage("create.grader", jsonStr);
+        sendMessage("create.grading", jsonStr);
         address.value = "";
         postalCode.value = "";
         isWrongInput.value = false;

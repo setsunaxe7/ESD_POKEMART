@@ -52,9 +52,8 @@ services:
       - ../backend/bidding/.env  # Load environment variables from .env file
     ports:
       - "5002:5002"
-    # depends_on:
-    #  rabbitmq:
-    #   condition: service_completed_successfully
+    depends_on:
+      - rabbitmq-setup
 
 
   # Inventory
@@ -84,6 +83,52 @@ services:
       - "5004:5004"
     depends_on:
       - redis-cache-service
+
+
+  # Grading
+  grading-service:
+    build:
+      context: ../backend/grading/
+    container_name: grading-service
+    restart: always
+    networks:
+      - bulba-net
+    # env_file:
+      # - ../backend/grading/.env  # Load environment variables from .env file
+    ports:
+      - "5005:5005"
+    depends_on:
+      - rabbitmq-setup
+
+  # External Grading
+  external-grading-service:
+    build:
+      context: ../backend/external_grading/
+    container_name: external-grading-service
+    restart: always
+    networks:
+      - bulba-net
+    # env_file:
+      # - ../backend/external_grading/.env  # Load environment variables from .env file
+    ports:
+      - "5006:5006"
+    depends_on:
+      - rabbitmq-setup
+
+  # Delivery
+  delivery-service:
+    build:
+      context: ../backend/delivery/
+    container_name: delivery-service
+    restart: always
+    networks:
+      - bulba-net
+    # env_file:
+      # - ../backend/delivery/.env  # Load environment variables from .env file
+    ports:
+      - "5007:5007"
+    depends_on:
+      - rabbitmq-setup
 
   ####################################
   # RabbitMQ: The messaging broker   
