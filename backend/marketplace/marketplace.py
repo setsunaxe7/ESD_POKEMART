@@ -34,10 +34,10 @@ async def listen_to_redis():
             if message and message["type"] == "message":
                 auction_id, highest_bid = message["data"].split(":")
                 print(f"New bid received: Auction ID {auction_id}, Highest Bid {highest_bid}")
-                
+
                 # Update Supabase with the new highest bid
                 update_highest_bid_in_supabase(auction_id, highest_bid)
-                
+
                 # Broadcast update via WebSockets
                 await broadcast_to_clients(auction_id, highest_bid)
         except Exception as e:
@@ -136,6 +136,7 @@ def get_listings():
         status = request.args.get('status', 'active')
         type_filter = request.args.get('type')
         seller_id = request.args.get('seller_id')
+        card_id = request.args.get('card_id')
 
         # Build the query
         query = supabase.table('marketplace').select('*')
@@ -147,6 +148,8 @@ def get_listings():
             query = query.eq('type', type_filter)
         if seller_id:
             query = query.eq('seller_id', seller_id)
+        if card_id:  # Add this condition to filter by card_id
+            query = query.eq('card_id', card_id)
 
         # Execute the query
         result = query.execute()

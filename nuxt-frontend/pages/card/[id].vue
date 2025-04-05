@@ -1,10 +1,10 @@
 <script setup lang="ts">
-    import type { Card } from "~/types/card";
-    import { useCards } from "#imports";
+    import { useCards, useListings } from "#imports";
     import axios from "axios";
     import type { BreadcrumbItem, TabsItem } from "@nuxt/ui";
     import { USeparator } from "#components";
     const { card, cardLoading, cardError, fetchCard } = useCards();
+    const { listings, isListingLoading, listingError, fetchListings } = useListings();
 
     // Get the route to access the ID parameter
     const route = useRoute();
@@ -113,6 +113,16 @@
         };
     };
 
+    const directListings = computed(() => {
+        if (!listings.value) return [];
+        return listings.value.filter((listing) => listing.type === "direct");
+    });
+
+    const auctionListings = computed(() => {
+        if (!listings.value) return [];
+        return listings.value.filter((listing) => listing.type === "auction");
+    });
+
     // Refs for Pokemon TCG data
     const tcgCard = ref<PokemonCard | null>(null);
     const isTcgLoading = ref(false);
@@ -145,6 +155,22 @@
         }
     };
 
+    function getTimeRemaining(endDateStr: string | null) {
+        if (!endDateStr) return "No end date";
+
+        const endDate = new Date(endDateStr);
+        const now = new Date();
+        const diff = endDate.getTime() - now.getTime();
+
+        if (diff <= 0) return "Auction ended";
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+        return `${days}d ${hours}h ${minutes}m`;
+    }
+
     let breadCrumb = ref<BreadcrumbItem[]>([
         {
             label: "Home",
@@ -161,17 +187,17 @@
         },
     ]);
 
-    const items = ref<TabsItem[]>([
+    const items = computed<TabsItem[]>(() => [
         {
-            label: "All listings",
+            label: `All listings (${listings.value?.length || 0})`,
             slot: "all",
         },
         {
-            label: "Buy Now",
+            label: `Buy Now (${directListings.value.length || 0})`,
             slot: "direct",
         },
         {
-            label: "Auctions",
+            label: `Auctions (${auctionListings.value.length || 0})`,
             slot: "auction",
         },
     ]);
@@ -179,6 +205,8 @@
     onMounted(async () => {
         // Fetch card from our database
         await fetchCard(id);
+
+        await fetchListings({ card_id: String(card.value?.id) });
 
         if (card.value?.card_id) {
             await fetchPokemonTcgCard(card.value.card_id);
@@ -242,9 +270,168 @@
                     <div class="space-y-4">
                         <h1 class="font-bold text-xl">Market Listings</h1>
                         <UTabs :items="items">
-                            <template #all="{ item }"></template>
-                            <template #direct="{ item }"></template>
-                            <template #auction="{ item }"></template>
+                            <template #all="{ item }">
+                                <div v-if="isListingLoading" class="py-4">
+                                    <ULoading />
+                                </div>
+                                <UCard v-else-if="!listings?.length" class="mt-4 bg-gray-50">
+                                    <div class="py-4 text-center text-gray-500">
+                                        No listings found for this card
+                                    </div>
+                                </UCard>
+                                <div v-else class="grid grid-cols-1 gap-4 py-4">
+                                    <UCard
+                                        v-for="listing in listings"
+                                        :key="listing.id"
+                                        class="hover:bg-gray-50 transition">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h3 class="font-bold">{{ listing.title }}</h3>
+                                                <p class="text-sm text-gray-500">
+                                                    Grade:
+                                                    {{
+                                                        listing.grade === 0
+                                                            ? "Ungraded"
+                                                            : `PSA ${listing.grade}`
+                                                    }}
+                                                </p>
+                                                <p
+                                                    v-if="listing.type === 'auction'"
+                                                    class="text-sm text-red-500 font-medium flex items-center">
+                                                    <UIcon name="i-lucide-clock" class="mr-1" />
+                                                    {{ getTimeRemaining(listing.auction_end_date) }}
+                                                </p>
+                                            </div>
+                                            <div class="text-right">
+                                                <div
+                                                    v-if="listing.type === 'direct'"
+                                                    class="font-bold text-primary">
+                                                    ${{ listing.price.toFixed(2) }}
+                                                </div>
+                                                <div v-else>
+                                                    <div class="font-bold">
+                                                        ${{
+                                                            (
+                                                                listing.highest_bid || listing.price
+                                                            ).toFixed(2)
+                                                        }}
+                                                    </div>
+                                                    <p class="text-xs">Current Bid</p>
+                                                </div>
+                                                <UButton
+                                                    class="mt-2"
+                                                    :to="`/listing/${listing.id}`"
+                                                    :color="
+                                                        listing.type === 'direct'
+                                                            ? 'primary'
+                                                            : 'error'
+                                                    "
+                                                    size="md">
+                                                    {{
+                                                        listing.type === "direct"
+                                                            ? "Buy Now"
+                                                            : "View Auction"
+                                                    }}
+                                                </UButton>
+                                            </div>
+                                        </div>
+                                    </UCard>
+                                </div>
+                            </template>
+                            <template #direct="{ item }">
+                                <div v-if="isListingLoading" class="py-4">
+                                    <ULoading />
+                                </div>
+                                <UCard v-else-if="!directListings?.length" class="mt-4 bg-gray-50">
+                                    <div class="py-4 text-center text-gray-500">
+                                        No direct listings found for this card
+                                    </div>
+                                </UCard>
+                                <div v-else class="grid grid-cols-1 gap-4 py-4 listing-scroll">
+                                    <UCard
+                                        v-for="listing in directListings"
+                                        :key="listing.id"
+                                        class="hover:bg-gray-50 transition">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h3 class="font-bold">{{ listing.title }}</h3>
+                                                <p class="text-sm text-gray-500">
+                                                    Grade:
+                                                    {{
+                                                        listing.grade === 0
+                                                            ? "Ungraded"
+                                                            : `PSA ${listing.grade}`
+                                                    }}
+                                                </p>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="font-bold text-primary">
+                                                    ${{ listing.price.toFixed(2) }}
+                                                </div>
+                                                <UButton
+                                                    class="mt-2"
+                                                    :to="`/listing/${listing.id}`"
+                                                    color="primary"
+                                                    size="md">
+                                                    Buy Now
+                                                </UButton>
+                                            </div>
+                                        </div>
+                                    </UCard>
+                                </div>
+                            </template>
+                            <template #auction="{ item }">
+                                <div v-if="isListingLoading" class="py-4">
+                                    <ULoading />
+                                </div>
+                                <UCard v-else-if="!auctionListings?.length" class="mt-4 bg-gray-50">
+                                    <div class="py-4 text-center text-gray-500">
+                                        No auction listings found for this card
+                                    </div>
+                                </UCard>
+                                <div v-else class="grid grid-cols-1 gap-4 py-4 listing-scroll">
+                                    <UCard
+                                        v-for="listing in auctionListings"
+                                        :key="listing.id"
+                                        class="hover:bg-gray-50 transition">
+                                        <div class="flex justify-between items-start">
+                                            <div>
+                                                <h3 class="font-bold">{{ listing.title }}</h3>
+                                                <p class="text-sm text-gray-500">
+                                                    Grade:
+                                                    {{
+                                                        listing.grade === 0
+                                                            ? "Ungraded"
+                                                            : `PSA ${listing.grade}`
+                                                    }}
+                                                </p>
+                                                <p
+                                                    class="text-sm text-red-500 font-medium flex items-center">
+                                                    <UIcon name="i-lucide-clock" class="mr-1" />
+                                                    {{ getTimeRemaining(listing.auction_end_date) }}
+                                                </p>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="font-bold">
+                                                    ${{
+                                                        (
+                                                            listing.highest_bid || listing.price
+                                                        ).toFixed(2)
+                                                    }}
+                                                </div>
+                                                <p class="text-xs">Current Bid</p>
+                                                <UButton
+                                                    class="mt-2"
+                                                    :to="`/listing/${listing.id}`"
+                                                    color="error"
+                                                    size="md">
+                                                    View Auction
+                                                </UButton>
+                                            </div>
+                                        </div>
+                                    </UCard>
+                                </div>
+                            </template>
                         </UTabs>
                     </div>
                 </div>
@@ -252,3 +439,5 @@
         </UContainer>
     </UMain>
 </template>
+
+<style></style>
