@@ -15,7 +15,7 @@ Frontend:<br>
 ```
 cd nuxt-frontend
 npm i
-npm run dev -- -o
+npm run dev
 ```
 
 <!-- Backend: [WIP] -->

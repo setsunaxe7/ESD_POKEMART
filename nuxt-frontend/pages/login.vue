@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import * as v from 'valibot'
-import type { FormSubmitEvent } from '@nuxt/ui'
 
 const isButtonPressed = ref(false)
 const schema = v.object({
