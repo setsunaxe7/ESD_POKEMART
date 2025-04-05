@@ -27,8 +27,11 @@ redis_client = redis.StrictRedis(host="redis-cache-service", port=6379, decode_r
 # RabbitMQ Config
 rabbit_host = "rabbitmq"  # Use "rabbitmq" if running inside Docker
 rabbit_port = 5672
-exchange_name = "main"  # Topic exchange declared in amqp_setup.py
+exchange_name = "grading_topic"  # Topic exchange declared in amqp_setup.py
 exchange_type = "topic"
+queue_name = "auction"  # Queue for auction updates
+
+
 
 # AMQP message for updating bid data
 def send_bid_update(listing_id, highest_bid):
@@ -54,6 +57,18 @@ def send_bid_update(listing_id, highest_bid):
         amqp_lib.close(connection, channel)
 
 
+# Prepopulate redis cache via MongoDB on startup
+def populate_redis_cache():
+    print("Populating Redis cache with highest bids from MongoDB...")
+    auctions = bids_collection.aggregate([
+        {"$group": {"_id": "$auctionId", "highestBid": {"$max": "$bidAmount"}}}
+    ])
+    for auction in auctions:
+        auction_id = auction["_id"]
+        highest_bid = auction["highestBid"]
+        redis_client.set(auction_id, highest_bid)
+        print(f"Cached auction {auction_id} with highest bid {highest_bid}")
+
 ###############################################################################################
 
 
@@ -69,7 +84,7 @@ def place_bid():
         return jsonify({"error": "Missing required fields"}), 400
 
     # Check the highest bid from Redis cache first
-    cached_highest = redis_client.get(f"highest_bid:{auction_id}")
+    cached_highest = redis_client.get(auction_id)
     current_highest = float(cached_highest) if cached_highest else 0
 
     if bid_amount <= current_highest:
@@ -95,7 +110,7 @@ def place_bid():
 @app.route("/highest-bid/<auction_id>", methods=["GET"])
 def get_highest_bid(auction_id):
     # Check Redis cache first
-    cached_highest = redis_client.get(f"highest_bid:{auction_id}")
+    cached_highest = redis_client.get(auction_id)
     
     if cached_highest:
         return jsonify({"auctionId": auction_id, "highestBid": float(cached_highest)})
@@ -107,7 +122,7 @@ def get_highest_bid(auction_id):
     highest_bid = highest_bid_entry["bidAmount"] if highest_bid_entry else 0
 
     # Store in Redis for future use
-    redis_client.set(f"highest_bid:{auction_id}", highest_bid)
+    redis_client.set(auction_id, highest_bid)
 
     return jsonify({"auctionId": auction_id, "highestBid": highest_bid})
 
@@ -120,4 +135,5 @@ def get_bids(auction_id):
 
 
 if __name__ == "__main__":
+    populate_redis_cache()
     app.run(host="0.0.0.0", port=5002, debug=True)

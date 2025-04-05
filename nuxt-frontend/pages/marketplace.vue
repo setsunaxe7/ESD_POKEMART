@@ -1,10 +1,9 @@
 <script setup lang="ts">
 
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import type { Listing } from "../types/listing";
 import { UButton } from "#components";
 import WebSocketService from "../services/websocketService.js";
-
 
 // Reactive variables for search, sorting, and pagination
 const searchQuery = ref("");
@@ -13,29 +12,40 @@ const currentPage = ref(1);
 
 const listings = ref<Listing[]>([]);
 
-// Fetch Cards from API
+// Fetch Cards from API and set up WebSocket
 onMounted(async () => {
   try {
     const response = await $fetch<Listing[]>("http://localhost:8000/marketplace/api/marketplace/listings");
     listings.value = response; // Assign API response to listings
 
-    // Connect to WebSocket server
-    WebSocketService.connect("ws://localhost:15674/ws");
-    WebSocketService.subscribeToBids((message) => {
-      const { listing_id, highest_bid } = message;
+    // Subscribe to auction updates via WebSocket
+    WebSocketService.econnect("ws://localhost:15674/ws",  "grading_topic", "*.auction", (message) => {
+      const { listing_id, highest_bid } = message; // Destructure the message object
 
-      // Find the relevant listing and update its highest_bid dynamically
-      const listingToUpdate = listings.value.find(
-        (listing) => listing.id === listing_id && listing.type === "auction"
-      );
-      if (listingToUpdate) {
-        listingToUpdate.highest_bid = highest_bid;
-      }
+      // Find the index of the relevant listing in the listings array
+      const index = listings.value.findIndex(
+          (listing) => listing.id === listing_id && listing.type === "auction"
+        );
+
+        if (index !== -1) {
+          // Replace the entire object at the found index to trigger reactivity
+          listings.value[index] = {
+            ...listings.value[index], // Keep other properties unchanged
+            highest_bid,              // Update the highest_bid property
+          };
+          console.log(`Updated highest bid for listing ${listing_id}: ${highest_bid}`);
+        }
+
     });
 
   } catch (error) {
     console.error("Error fetching marketplace listings:", error);
   }
+});
+
+// Disconnect WebSocket on component unmount
+onUnmounted(() => {
+  WebSocketService.disconnect();
 });
 
 // Dropdown menu items for sorting
@@ -69,8 +79,9 @@ const items = ref([
     icon: "i-lucide-cog",
   },
 ]);
-    
+
 </script>
+
 
 <template>
     <UMain>

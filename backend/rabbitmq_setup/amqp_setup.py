@@ -108,12 +108,19 @@ try:
     )
 
     # Create auction queue
-    create_queue(
-        channel=channel,
-        exchange_name=exchange_name,
-        queue_name="auction",
-        routing_key="*.auction",
-    )
+    # create_queue(
+    #     channel=channel,
+    #     exchange_name=exchange_name,
+    #     queue_name="auction_bidding",
+    #     routing_key="*.auction",
+    # )
+
+    # create_queue(
+    #     channel=channel,
+    #     exchange_name=exchange_name,
+    #     queue_name="auction_marketplace",
+    #     routing_key="*.auction",
+    # )
 
 finally:
     # Close the connection
