@@ -3,7 +3,7 @@ _transform: true
 
 services:
   - name: bidding-service
-    url: http://bidding-service:  2
+    url: http://bidding-service:5002
     routes:
       - name: bidding-route
         paths:
