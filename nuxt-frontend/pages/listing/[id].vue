@@ -31,7 +31,7 @@
         },
         {
             label: "Marketplace",
-            icon: "i-lucide-box",
+            icon: "i-lucide-store",
             to: "/marketplace",
         },
         {
@@ -59,7 +59,7 @@
                 },
                 {
                     label: "Marketplace",
-                    icon: "i-lucide-box",
+                    icon: "i-lucide-store",
                     to: "/marketplace",
                 },
                 {

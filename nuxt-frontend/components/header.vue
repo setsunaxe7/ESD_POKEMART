@@ -4,7 +4,7 @@ const route = useRoute();
 const items = computed(() => [
     {
         label: "Collection",
-        to: "/collection",
+        to: "/collection/page/1",
         active: route.path.startsWith("/collection"),
     },
     {

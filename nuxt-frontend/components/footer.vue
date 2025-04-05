@@ -2,7 +2,7 @@
     const items = [
         {
             label: "View Collection",
-            to: "/collection",
+            to: "/collection/page/1",
         },
         {
             label: "Buy Cards",
@@ -10,7 +10,7 @@
         },
         {
             label: "List Cards",
-            to: "/marketplace",
+            to: "/sell",
         },
         {
             label: "Grading Service",

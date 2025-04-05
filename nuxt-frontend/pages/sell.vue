@@ -167,7 +167,7 @@
 
             // Send the request
             const response = await axios.post(
-                "http://localhost:8001/api/marketplace/listings",
+                "http://127.0.0.1:8000/marketplace/api/marketplace/listings",
                 formData,
                 {
                     headers: {
