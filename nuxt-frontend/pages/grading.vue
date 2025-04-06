@@ -1,12 +1,31 @@
 <script setup lang="ts">
     import { ref, onMounted, computed, onUnmounted } from 'vue';
     import { useCards } from "../composables/inventory";
+    import { useSupabaseClient, useSupabaseUser  } from '#imports'; 
+    // supabase module
+    import SupabaseUserService from "../services/supabaseUserService.js"; 
     // websocket module
     import WebSocketService from "../services/websocketService.js";
 
     // Get card info from Inventory ms
     const { cards, isLoading, error, fetchCards } = useCards();
-    onMounted(fetchCards);
+    
+    // Mounted
+    onMounted(() => {
+        // Get cards from inventory for card name dropdown
+        fetchCards();
+
+        // connect to RabbitMQ
+        WebSocketService.connect("ws://localhost:15674/ws");
+        // WebSocketService.connect("ws://localhost:15674/ws", "grading", onMessageReceived);
+        
+        // get UserId
+        getUserId();
+    });
+
+    onUnmounted(() => {
+        WebSocketService.disconnect();
+    });
 
     // Tabs items
     const items = [
@@ -31,6 +50,7 @@
         }));
     });
 
+    //  -------------------------------------------------------------
     // Form input variables
     const cardId = computed(() => {
         return cardName.value.length > 0 ? cardName.value[0].value : "";
@@ -44,15 +64,7 @@
     const isWrongInput = ref(false);
     const errMsg = ref("");
 
-    // connect to RabbitMQ
-    onMounted(() => {
-        // WebSocketService.connect("ws://localhost:15674/ws", "grading", onMessageReceived);
-        WebSocketService.connect("ws://localhost:15674/ws");
-    });
-
-    onUnmounted(() => {
-        WebSocketService.disconnect();
-    });
+    //  -------------------------------------------------------------
 
     // RabbitMQ functions
     const exchange = "grading_topic";
@@ -67,6 +79,26 @@
         WebSocketService.sendMessage(exchange, routingKey, jsonStr);
     };
 
+    //  -------------------------------------------------------------
+    // Supabase User
+    const supabaseClient = useSupabaseClient()
+    const user = useSupabaseUser();
+
+    // Initialize the user service
+    const userService = new SupabaseUserService(supabaseClient);
+
+    // Get user id
+    const uuid = ref("");
+
+    // Get UserId
+    const getUserId = async () => {
+        const userData = await userService.fetchUserData(user.value);  
+        if (userData) {
+            uuid.value = userData.id; 
+        }
+    };
+
+    //  -------------------------------------------------------------
     // Submit form/ integration w backend
     function submitForm() {
         if(!address.value.trim() && !postalCode.value.trim()){
@@ -93,22 +125,23 @@
             console.log("works");
             return;
         }
-        console.log(postalCode.value);
-        console.log(address.value);
+        // console.log(postalCode.value);
+        // console.log(address.value);
         const jsonStr = {
             address: address.value,
             cardID: cardId.value,
             postalCode: postalCode.value,
+            userID: uuid.value,
         }
-        sendMessage("create.grader", jsonStr);
+        sendMessage("create.grading", jsonStr);
         address.value = "";
         postalCode.value = "";
         isWrongInput.value = false;
         errMsg.value = "";
         return;
-        // add in unique ID
     }
 
+    //  -------------------------------------------------------------
     // Change Date from Inventory ms into Date String
     function formatDate(date: Date | string): string {
     if (typeof date === 'string') {

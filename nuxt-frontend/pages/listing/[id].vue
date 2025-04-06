@@ -72,14 +72,13 @@
             highestBid.value = listing.value.highest_bid || 0;
 
             // Connect to WebSocket and subscribe to bid updates
-            WebSocketService.connect("ws://localhost:15674/ws");
-            WebSocketService.subscribeToExchange("main", "*.auction", (message) => {
-                console.log("this happens")
+            WebSocketService.econnect("ws://localhost:15674/ws", "grading_topic", "*.auction", (message) => {
                 if (message.listing_id === id) {
                     highestBid.value = message.highest_bid;
                     console.log(`Highest bid updated to ${message.highest_bid}`);
                 }
             });
+
 
         } catch (err: any) {
             error.value = err.message || "Failed to load listing";
@@ -132,7 +131,7 @@
             currency: "USD",
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
-        }).format(listing.value.highest_bid);
+        }).format(highestBid.value);
     });
 
 
