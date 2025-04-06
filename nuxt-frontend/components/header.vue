@@ -1,25 +1,31 @@
 <script setup lang="ts">
-const route = useRoute();
+    import type { NavigationMenuItem } from "@nuxt/ui";
+    const route = useRoute();
 
-const items = computed(() => [
-    {
-        label: "Collection",
-        to: "/collection/page/1",
-        active: route.path.startsWith("/collection"),
-    },
-    {
-        label: "Marketplace",
-        to: "/marketplace",
-        active: route.path.startsWith("/marketplace"),
-    },
-    {
-        label: "Grading",
-        to: "/grading",
-        active: route.path.startsWith("/grading"),
-    },
-]);
+    const items = ref<NavigationMenuItem[]>([
+        {
+            label: "Collection",
+            to: "/collection/page/1",
+            active: computed(() => route.path.startsWith("/collection")),
+        },
+        {
+            label: "Marketplace",
+            to: "/marketplace",
+            active: computed(() => route.path.startsWith("/marketplace")),
+        },
+        {
+            label: "Sell Cards",
+            to: "/sell",
+            active: computed(() => route.path.startsWith("/sell")),
+        },
+        {
+            label: "Grade Cards",
+            to: "/grading",
+            active: computed(() => route.path.startsWith("/grading")),
+        },
+    ]);
 
-const user = useSupabaseUser()
+    const user = useSupabaseUser();
 </script>
 
 <template>
@@ -31,7 +37,7 @@ const user = useSupabaseUser()
             </div>
         </template>
 
-        <UNavigationMenu :items="items" />
+        <UNavigationMenu class="w-full justify-center" :items="items" />
 
         <template #right>
             <UColorModeButton />
@@ -53,7 +59,6 @@ const user = useSupabaseUser()
                     icon="i-simple-icons-github"
                     aria-label="GitHub" />
             </UTooltip> -->
-
         </template>
     </UHeader>
 </template>

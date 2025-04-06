@@ -3,7 +3,7 @@ import json
 import os
 import amqp_lib
 
-rabbit_host = "localhost"
+rabbit_host = "rabbitmq"
 rabbit_port = 5672
 exchange_name = "grading_topic"
 exchange_type = "topic"

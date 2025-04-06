@@ -1,12 +1,31 @@
 <script setup lang="ts">
     import { ref, onMounted, computed, onUnmounted } from 'vue';
     import { useCards } from "../composables/inventory";
+    import { useSupabaseClient, useSupabaseUser  } from '#imports'; 
+    // supabase module
+    import SupabaseUserService from "../services/supabaseUserService.js"; 
     // websocket module
     import WebSocketService from "../services/websocketService.js";
 
     // Get card info from Inventory ms
     const { cards, isLoading, error, fetchCards } = useCards();
-    onMounted(fetchCards);
+    
+    // Mounted
+    onMounted(async () => {
+        // Get cards from inventory for card name dropdown
+        await fetchCards();
+        cardId.value = cardName.value[0].value;
+
+        // connect to RabbitMQ
+        WebSocketService.connect("ws://localhost:15674/ws", "return", onMessageReceived);
+
+        // get UserId
+        getUserId();
+    });
+
+    onUnmounted(() => {
+        WebSocketService.disconnect();
+    });
 
     // Tabs items
     const items = [
@@ -27,14 +46,28 @@
         return cards.value.map((card) => ({
             label: card.name + " [" + card.rarity + "]",
             value: card.card_id,
-            card: card,
         }));
     });
 
-    // Form input variables
-    const cardId = computed(() => {
-        return cardName.value.length > 0 ? cardName.value[0].value : "";
+    const cardMap = computed(() => {
+        if (!cards.value) return {};
+
+        return cards.value.reduce((acc, card) => {
+            acc[card.card_id] = {
+            name: card.name,
+            rarity: card.rarity,
+            image_url: card.image_url,
+            };
+            return acc;
+        }, {});
     });
+
+    //  -------------------------------------------------------------
+    // Form input variables
+    const cardId = ref("");
+    // const cardId = computed(() => {
+    //     return cardName.value.length > 0 ? cardName.value[0].value : "";
+    // });
 
     // Form input variables
     const address = ref("");
@@ -44,28 +77,50 @@
     const isWrongInput = ref(false);
     const errMsg = ref("");
 
-    // connect to RabbitMQ
-    onMounted(() => {
-        // WebSocketService.connect("ws://localhost:15674/ws", "grading", onMessageReceived);
-        WebSocketService.connect("ws://localhost:15674/ws");
-    });
-
-    onUnmounted(() => {
-        WebSocketService.disconnect();
-    });
+    //  -------------------------------------------------------------
 
     // RabbitMQ functions
     const exchange = "grading_topic";
 
     // Receive Message function
+    const userRequests = ref("");
     const onMessageReceived = (msg) => {
         console.log("Received:", msg);
-        // update the status wtv
+        userRequests.value = msg;
     };
     // Send message function
     const sendMessage = (routingKey ,jsonStr) => {
         WebSocketService.sendMessage(exchange, routingKey, jsonStr);
     };
+
+    //  -------------------------------------------------------------
+    // Supabase User
+    const supabaseClient = useSupabaseClient()
+    const user = useSupabaseUser();
+
+    // Initialize the user service
+    const userService = new SupabaseUserService(supabaseClient);
+
+    // Get user id
+    const uuid = ref("");
+
+    // Get UserId
+    const getUserId = async () => {
+        const userData = await userService.fetchUserData(user.value);  
+        if (userData) {
+            uuid.value = userData.id; 
+        }
+    };
+
+    //  -------------------------------------------------------------
+    // get user's database
+    const callDB = (selectedTabKey) =>{
+        console.log("call db pls");
+        if (selectedTabKey) {
+            const jsonStr = {"userID": uuid.value}
+            sendMessage("get.grading", jsonStr);
+        }
+    }
 
     // Submit form/ integration w backend
     function submitForm() {
@@ -93,22 +148,21 @@
             console.log("works");
             return;
         }
-        console.log(postalCode.value);
-        console.log(address.value);
         const jsonStr = {
             address: address.value,
             cardID: cardId.value,
             postalCode: postalCode.value,
+            userID: uuid.value,
         }
-        sendMessage("create.grader", jsonStr);
+        sendMessage("create.grading", jsonStr);
         address.value = "";
         postalCode.value = "";
         isWrongInput.value = false;
         errMsg.value = "";
         return;
-        // add in unique ID
     }
 
+    //  -------------------------------------------------------------
     // Change Date from Inventory ms into Date String
     function formatDate(date: Date | string): string {
     if (typeof date === 'string') {
@@ -137,7 +191,8 @@
             variant="link"
             :items="items"
             class="w-full"
-            :ui="{ trigger: 'flex-1' }" 
+            :ui="{ trigger: 'flex-1' }"
+            @update:modelValue="callDB" 
         >
 
         <!-- Submit Request content -->
@@ -186,29 +241,32 @@
             <template #requests>  
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Each Card -->
-                    <UCard v-for="card in cards" :key="card.id" class="card-container flex items-center">
+                    <UCard v-for="request in userRequests" :key="request.gradingID" class="card-container flex items-center">
                         <div class="grid grid-cols-3 gap-4 max-w-100">
                             <div class="col-span-1">
                                 <img
-                                v-if="card.image_url"
-                                :src="card.image_url"
-                                :alt="card.name"
+                                v-if="cardMap[request.cardID].image_url"
+                                :src="cardMap[request.cardID].image_url"
+                                :alt="cardMap[request.cardID].name"
                                 class="w-full h-auto object-contain"
                                 />
                                 <div v-else class="w-full h-auto bg-gray-100 flex items-center justify-center">
-                                No Image
+                                    No Image
                                 </div>
                             </div>
 
                             <!-- Text within the Card -->
                             <div class="col-span-2 content-evenly">
-                                <h3 class="font-medium text-lg">{{ card.name }}</h3>
-                                <p class="text-gray-600">Rarity: {{ card.rarity || "Unknown" }}</p>
-                                <p class="text-gray-600">Submitted At: {{ formatDate(card.created_at) }}</p>
+                                <h3 class="font-medium text-lg">{{ cardMap[request.cardID].name }}</h3>
+                                <p class="text-gray-600">Rarity: {{ cardMap[request.cardID].rarity || "Unknown" }}</p>
+                                <p class="text-gray-600">Submitted At: {{ formatDate(request.created_at) }}</p>
                                 <p class="text-gray-600">Status: 
-                                    <UBadge label="Submitted"/>
+                                <UBadge :label="request.status" 
+                                    :color="request.status === 'Created' ? 'info' : 
+                                    request.status === 'In Progress' ? 'warning' : 
+                                    request.status === 'Graded' ? 'success' : 'error'" />
                                 </p>
-                                <p v-if="true" class="text-gray-600">Result: -</p>
+                                <p v-if="request.status == 'Graded'" class="text-gray-600">Result: {{ request.result }}</p>
                             </div>
                         </div>
                     </UCard>

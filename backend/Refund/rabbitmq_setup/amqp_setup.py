@@ -7,7 +7,7 @@ A standalone script to create exchanges and queues on RabbitMQ.
 import pika
 
 # RabbitMQ connection details
-amqp_host = "rabbitmq"  # Use "rabbitmq" if running inside Docker
+amqp_host = "localhost"  # Use "rabbitmq" if running inside Docker
 amqp_port = 5672
 amqp_user = "guest"     # Default RabbitMQ username
 amqp_password = "guest" # Default RabbitMQ password
@@ -113,13 +113,6 @@ try:
         exchange_name=exchange_name,
         queue_name="auction",
         routing_key="*.auction",
-    )
-    
-    create_queue(
-        channel=channel,
-        exchange_name=exchange_name,
-        queue_name="return",
-        routing_key="*.return",
     )
 
 finally:
