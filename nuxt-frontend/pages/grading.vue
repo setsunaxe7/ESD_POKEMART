@@ -2,25 +2,59 @@
     import { ref, onMounted, computed, onUnmounted } from 'vue';
     import { useCards } from "../composables/inventory";
     import { useSupabaseClient, useSupabaseUser  } from '#imports'; 
+    
     // supabase module
     import SupabaseUserService from "../services/supabaseUserService.js"; 
+    
     // websocket module
     import WebSocketService from "../services/websocketService.js";
 
     // Get card info from Inventory ms
-    const { cards, isLoading, error, fetchCards } = useCards();
+    const { cards, error, fetchCards } = useCards();
     
+    const isLoading = ref(true);
+
+    // CardName
+    const cardName = computed(() => {
+        if (!cards.value) return [];
+        
+        return cards.value.map((card) => ({
+            label: card.name + " [" + card.rarity + "]",
+            value: card.card_id,
+        }));
+    });
+
+    // CardMap
+    const cardMap = computed(() => {
+        if (!cards.value) return {};
+
+        return cards.value.reduce((acc, card) => {
+            acc[card.card_id] = {
+            name: card.name,
+            rarity: card.rarity,
+            image_url: card.image_url,
+            };
+            return acc;
+        }, {});
+    });
+
     // Mounted
     onMounted(async () => {
-        // Get cards from inventory for card name dropdown
-        await fetchCards();
-        cardId.value = cardName.value[0].value;
+        try {
+            // Get cards from inventory for card name dropdown
+            await fetchCards();
+            cardId.value = cardName.value[0].value;
 
-        // connect to RabbitMQ
-        WebSocketService.connect("ws://localhost:15674/ws", "return", onMessageReceived);
+            // connect to RabbitMQ
+            WebSocketService.connect("ws://localhost:15674/ws", "return", onMessageReceived);
 
-        // get UserId
-        getUserId();
+            // get UserId
+            getUserId();
+        } catch (error) {
+            console.error("Error fetching marketplace listings:", error);
+        } finally {
+            isLoading.value = false;
+        }
     });
 
     onUnmounted(() => {
@@ -39,35 +73,10 @@
         },
     ];
 
-    // CardNameArr
-    const cardName = computed(() => {
-        if (!cards.value) return [];
-        
-        return cards.value.map((card) => ({
-            label: card.name + " [" + card.rarity + "]",
-            value: card.card_id,
-        }));
-    });
-
-    const cardMap = computed(() => {
-        if (!cards.value) return {};
-
-        return cards.value.reduce((acc, card) => {
-            acc[card.card_id] = {
-            name: card.name,
-            rarity: card.rarity,
-            image_url: card.image_url,
-            };
-            return acc;
-        }, {});
-    });
-
     //  -------------------------------------------------------------
+    
     // Form input variables
     const cardId = ref("");
-    // const cardId = computed(() => {
-    //     return cardName.value.length > 0 ? cardName.value[0].value : "";
-    // });
 
     // Form input variables
     const address = ref("");
@@ -76,6 +85,9 @@
     // errorMsg variables
     const isWrongInput = ref(false);
     const errMsg = ref("");
+
+    const isSuccess = ref(false);
+    const successMsg = ref("");
 
     //  -------------------------------------------------------------
 
@@ -94,6 +106,7 @@
     };
 
     //  -------------------------------------------------------------
+    
     // Supabase User
     const supabaseClient = useSupabaseClient()
     const user = useSupabaseUser();
@@ -124,6 +137,8 @@
 
     // Submit form/ integration w backend
     function submitForm() {
+        isSuccess.value = false;
+        successMsg.value = "";
         if(!address.value.trim() && !postalCode.value.trim()){
             errMsg.value = "Please enter your address & postal code.";
             isWrongInput.value = true;
@@ -159,6 +174,8 @@
         postalCode.value = "";
         isWrongInput.value = false;
         errMsg.value = "";
+        isSuccess.value = true;
+        successMsg.value = "Request has been submitted";
         return;
     }
 
@@ -183,96 +200,124 @@
             title="Professional Card Grading"
             description="Get your valuable Pokémon cards authenticated and graded by experts"
             :ui="{container: 'lg:py-24'}" />
+        <Loading v-if="isLoading"></Loading>
+        
+        <div v-else>
+            <!-- Submit Request/ My Request tabs -->
+            <UTabs
+                color="primary"
+                size="xl"
+                variant="link"
+                :items="items"
+                class="w-full"
+                :ui="{ trigger: 'flex-1' }"
+                @update:modelValue="callDB" 
+            >
 
-        <!-- Submit Request/ My Request tabs -->
-        <UTabs
-            color="primary"
-            size="xl"
-            variant="link"
-            :items="items"
-            class="w-full"
-            :ui="{ trigger: 'flex-1' }"
-            @update:modelValue="callDB" 
-        >
-
-        <!-- Submit Request content -->
-            <template #submit>
-                <!-- Error Message -->
-                <div v-if="isWrongInput">
-                    <UAlert 
-                        :title="errMsg"
-                        color="error"
-                        variant="subtle"
-                        icon="material-symbols:warning"
-                    />
-                    <br>
-                </div>
-                <!-- Form -->
-                <UFormField label="Card ID">
-                    <USelectMenu 
-                        v-model="cardId" 
-                        value-key="value" 
-                        :items="cardName" 
-                        class="w-full" 
-                    />
-                </UFormField>
-                <br>
-                <UFormField label="Address">
-                    <UInput 
-                        v-model="address" 
-                        placeholder="Enter your address" 
-                        class="w-full"
-                    />
-                </UFormField>
-                <br>
-                <UFormField label="Postal Code">
-                    <UInput 
-                        v-model="postalCode"  
-                        type="number"
-                        placeholder="Enter your postal code" 
-                        class="w-full"
-                    />
-                </UFormField>
-                <br>
-                <UButton @click="submitForm">Submit</UButton>
-            </template>
-
-            <!-- My Request content -->
-            <template #requests>  
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Each Card -->
-                    <UCard v-for="request in userRequests" :key="request.gradingID" class="card-container flex items-center">
-                        <div class="grid grid-cols-3 gap-4 max-w-100">
-                            <div class="col-span-1">
-                                <img
-                                v-if="cardMap[request.cardID].image_url"
-                                :src="cardMap[request.cardID].image_url"
-                                :alt="cardMap[request.cardID].name"
-                                class="w-full h-auto object-contain"
+            <!-- Submit Request content -->
+                <template #submit>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="col-span-1">
+                            <!-- Card Image -->
+                            <img
+                            v-if="cardId"
+                            :src="cardMap[cardId].image_url"
+                            :alt="cardMap[cardId].name"
+                            class="w-full h-auto object-contain"
+                            />
+                        </div>
+                        <div class="col-span-3">
+                            <!-- Error Message -->
+                            <div v-if="isWrongInput">
+                                <UAlert 
+                                    :title="errMsg"
+                                    color="error"
+                                    variant="subtle"
+                                    icon="material-symbols:warning"
                                 />
-                                <div v-else class="w-full h-auto bg-gray-100 flex items-center justify-center">
-                                    No Image
+                                <br>
+                            </div>
+                            <!-- Success Message -->
+                            <div v-if="isSuccess">
+                                <UAlert 
+                                    :title="successMsg"
+                                    color="success"
+                                    variant="subtle"
+                                    icon="formkit:check"
+                                />
+                                <br>
+                            </div>
+                            <!-- Form -->
+                            <UFormField label="Card ID">
+                                <USelectMenu 
+                                    v-model="cardId" 
+                                    value-key="value" 
+                                    :items="cardName" 
+                                    class="w-full" 
+                                />
+                            </UFormField>
+                            <br>
+                            <UFormField label="Address">
+                                <UInput 
+                                    v-model="address" 
+                                    placeholder="Enter your address" 
+                                    class="w-full"
+                                />
+                            </UFormField>
+                            <br>
+                            <UFormField label="Postal Code">
+                                <UInput 
+                                    v-model="postalCode"  
+                                    type="number"
+                                    placeholder="Enter your postal code" 
+                                    class="w-full"
+                                />
+                            </UFormField>
+                            <br>
+
+                            <UButton @click="submitForm">Submit</UButton>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- My Request content -->
+                <template #requests>  
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Each Card -->
+                        <UCard v-for="request in userRequests" :key="request.gradingID" class="card-container flex items-center">
+                            <div class="grid grid-cols-3 gap-4 max-w-100">
+                                <!-- Card Image -->
+                                <div class="col-span-1">
+                                    <img
+                                    v-if="cardMap[request.cardID].image_url"
+                                    :src="cardMap[request.cardID].image_url"
+                                    :alt="cardMap[request.cardID].name"
+                                    class="w-full h-auto object-contain"
+                                    />
+                                    <div v-else class="w-full h-auto bg-gray-100 flex items-center justify-center">
+                                        No Image
+                                    </div>
+                                </div>
+
+                                <!-- Text within the Card -->
+                                <div class="col-span-2 content-evenly">
+                                    <h3 class="font-medium text-lg">{{ cardMap[request.cardID].name }}</h3>
+                                    <p class="text-gray-600">Rarity: {{ cardMap[request.cardID].rarity || "Unknown" }}</p>
+                                    <p class="text-gray-600">Submitted At: {{ formatDate(request.created_at) }}</p>
+                                    <p class="text-gray-600">Status: 
+                                    <UBadge :label="request.status" 
+                                        :color="request.status === 'Created' ? 'info' : 
+                                        request.status === 'In Progress' ? 'warning' : 
+                                        request.status === 'Graded' ? 'success' : 'error'" />
+                                    </p>
+                                    <p v-if="request.status == 'Graded'" class="text-gray-600">Result: {{ request.result }}</p>
                                 </div>
                             </div>
-
-                            <!-- Text within the Card -->
-                            <div class="col-span-2 content-evenly">
-                                <h3 class="font-medium text-lg">{{ cardMap[request.cardID].name }}</h3>
-                                <p class="text-gray-600">Rarity: {{ cardMap[request.cardID].rarity || "Unknown" }}</p>
-                                <p class="text-gray-600">Submitted At: {{ formatDate(request.created_at) }}</p>
-                                <p class="text-gray-600">Status: 
-                                <UBadge :label="request.status" 
-                                    :color="request.status === 'Created' ? 'info' : 
-                                    request.status === 'In Progress' ? 'warning' : 
-                                    request.status === 'Graded' ? 'success' : 'error'" />
-                                </p>
-                                <p v-if="request.status == 'Graded'" class="text-gray-600">Result: {{ request.result }}</p>
-                            </div>
-                        </div>
-                    </UCard>
-                </div>
-            </template>
-        </UTabs>
+                        </UCard>
+                    </div>
+                </template>
+            </UTabs>
+        </div>
     </UContainer>
 </UMain>
 </template>

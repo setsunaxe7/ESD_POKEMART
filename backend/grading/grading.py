@@ -22,6 +22,7 @@ queue_name = "grading"
 connection = None
 channel = None
 
+# RabbitMQ Connector
 def connectAMQP():
     global connection, channel
     print("  Connecting to AMQP broker...")
@@ -69,11 +70,11 @@ def grade_card(channel, method, properties, body):
         # Upload to Supabase storage
         response = supabase.table("grading").insert(data).execute()
         
-        # if response.error is None:
-        #     print("Data inserted successfully:", response.data)
-        # else:
-        #     print("Error inserting data:", response.error)
-        
+        if response.data:
+            print(json.dumps(response.data))
+        else:
+            print("error: No record found")
+
         # Default card status
         cardStatus = "Pending Grading"
         
@@ -135,8 +136,6 @@ def sendGradingAndNotify(gradingID, cardID, cardStatus, address, postalCode):
             "message": "Internal error",
             "exception": ex_str
         }
-        
-        
 
 # takes in bkey get.grading EXACT
 def getDB(channel, method, properties, body):
