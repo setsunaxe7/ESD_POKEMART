@@ -4,12 +4,15 @@
     import type { BreadcrumbItem } from "@nuxt/ui";
     import type { Card } from "~/types/card";
     import WebSocketService from "../../services/websocketService.js";
+    import PaymentModal from "~/components/paymentModal.vue";
 
     interface BidUpdateMessage {
         listing_id: string;
         highest_bid: number;
     }
 
+    const showPaymentModal = ref(false); // Controls visibility of the modal
+    const paymentAmount = ref<number | null>(null); // Holds the price for the payment modal
 
 
     // Get the route to access the ID parameter
@@ -87,11 +90,6 @@
             isLoading.value = false;
         }
     });
-
-    // onMounted(() => {
-    //     WebSocketService.connect("ws://localhost:15674/ws");
-    //     // WebSocketService.subscribeToQueue("grading", onMessageReceived);
-    // });
 
     onUnmounted(() => {
         WebSocketService.disconnect();
@@ -177,6 +175,8 @@
     // Implement placeOrder
     function placeOrder() {
         console.log("Place order");
+        showPaymentModal.value = true; // Show the payment modal
+        paymentAmount.value = listing.value?.price || 0; // Pass the price to the modal
     }
 </script>
 
@@ -260,6 +260,15 @@
                             </div>
                         </div>
                     </UCard>
+
+                    <!-- Payment Modal -->
+                    <PaymentModal 
+                        :show="showPaymentModal"
+                        :amount="paymentAmount * 100" 
+                        currency="USD" 
+                        @close="showPaymentModal = false"
+                    />
+
                 </div>
             </div>
         </UContainer>

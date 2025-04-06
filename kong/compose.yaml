@@ -52,9 +52,8 @@ services:
       - ../backend/bidding/.env  # Load environment variables from .env file
     ports:
       - "5002:5002"
-    # depends_on:
-    #  rabbitmq:
-    #   condition: service_completed_successfully
+    depends_on:
+      - rabbitmq-setup
 
 
   # Inventory
@@ -84,6 +83,20 @@ services:
       - "5004:5004"
     depends_on:
       - redis-cache-service
+
+  # Payment
+  payment-service:
+    build:
+      context: ../backend/payment/
+    container_name: payment-service
+    restart: always
+    networks:
+      - bulba-net
+    env_file:
+      - ../backend/payment/.env  # Load environment variables from .env file
+    ports:
+      - "5007:5007"
+
 
   ####################################
   # RabbitMQ: The messaging broker   

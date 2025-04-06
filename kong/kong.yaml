@@ -23,6 +23,13 @@ services:
         paths:
           - /marketplace
 
+  - name: payment-service
+    url: http://payment-service:5007
+    routes:
+      - name: payment-route
+        paths:
+          - /payment
+
 plugins:
   - name: proxy-cache
     config:
