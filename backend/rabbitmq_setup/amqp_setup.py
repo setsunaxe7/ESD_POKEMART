@@ -114,6 +114,13 @@ try:
         queue_name="auction",
         routing_key="*.auction",
     )
+    
+    create_queue(
+        channel=channel,
+        exchange_name=exchange_name,
+        queue_name="return",
+        routing_key="*.return",
+    )
 
 finally:
     # Close the connection
