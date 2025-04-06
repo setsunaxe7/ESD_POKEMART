@@ -4,9 +4,9 @@ const axios = require('axios');
 
 // 🔧 Correct RabbitMQ container service name
 const RABBITMQ_URL = 'amqp://guest:guest@rabbitmq:5672';
-const EXCHANGE_NAME = 'bulba.topic';
-const QUEUE_NAME = 'notification.queue';
-const ROUTING_KEY = '*.inform';
+const EXCHANGE_NAME = 'grading_topic';
+const QUEUE_NAME = 'notification';
+const ROUTING_KEY = '*.notify';
 
 // 🔗 Replace this with your actual OutSystems API endpoint
 const OUTSYSTEMS_API = 'https://personal-gvra7qzz.outsystemscloud.com/Notification/rest/NotificationAPI/api/notification/receive';
