@@ -3,7 +3,7 @@ const amqp = require('amqplib');
 const axios = require('axios');
 
 // 🔧 Correct RabbitMQ container service name
-// const RABBITMQ_URL = 'amqp://admin:admin@localhost:5673';  Change to service name
+const RABBITMQ_URL = 'amqp://guest:guest@rabbitmq:5672';
 const EXCHANGE_NAME = 'bulba.topic';
 const QUEUE_NAME = 'notification.queue';
 const ROUTING_KEY = '*.inform';
