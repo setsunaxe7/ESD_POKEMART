@@ -155,7 +155,7 @@
             });
 
             console.log("Bid placed successfully:", response);
-            const updatedBidCount = (listing.value.bid_count || 0) + 1;
+            const updatedBidCount = (listing.value?.bid_count || 0) + 1;
 
             const response2 = await $fetch(`http://localhost:8000/marketplace/api/marketplace/listings/${id}`, {
                 method: 'PUT',
