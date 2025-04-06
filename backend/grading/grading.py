@@ -13,7 +13,7 @@ supabase_key= os.getenv("SUPABASE_KEY")
 supabase = create_client(supabase_url, supabase_key)
 
 # RabbitMQ Config
-rabbit_host = "localhost"
+rabbit_host = "rabbitmq"
 rabbit_port = 5672
 exchange_name = "grading_topic"
 exchange_type = "topic"
