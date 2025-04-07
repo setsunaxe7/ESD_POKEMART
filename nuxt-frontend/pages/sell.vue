@@ -74,7 +74,7 @@
     // Fetch cards when component mounts
     onMounted( async () => {
         await fetchCards();
-        selectedCard.value = cardOptions.value[0];
+        // selectedCard.value = cardOptions.value[0];
     });
 
     const selectedCard = ref();

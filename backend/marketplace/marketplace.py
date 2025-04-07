@@ -7,7 +7,6 @@ import os
 import redis
 import asyncio
 
-
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
@@ -120,6 +119,10 @@ def create_listing():
 
         # Insert the listing into Supabase
         result = supabase.table('marketplace').insert(listing_data).execute()
+        new_listing_id = result.data[0]['id']
+
+        if listing_data.get('type') == 'auction':
+            redis_client.set(new_listing_id, listing_data['price'])
 
         return jsonify(result.data[0]), 201
 
