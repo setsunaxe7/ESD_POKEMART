@@ -11,6 +11,7 @@ export interface Listing {
     image_url: string;
     created_at: string;
     updated_at: string;
+    seller_name: string;
 
     // Auction specific properties
     auction_start_date?: string | null;

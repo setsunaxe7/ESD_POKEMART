@@ -10,7 +10,12 @@
         highest_bid: number;
     }
 
-
+    interface BiddingInfo {
+        auctionId: string;
+        bidAmount: number;
+        buyerId: string;
+        timestamp: string;
+    }
 
     // Get the route to access the ID parameter
     const route = useRoute();
@@ -18,12 +23,12 @@
 
     // State variables
     const listing = ref<Listing>();
+    const bidInfo = ref();
     const isLoading = ref(true);
     const error = ref<string | null>(null);
     const bidAmount = ref<number | null>(null);
     const listingCard = ref<Card>();
     const highestBid = ref<number | null>(null);
-
     let breadCrumb = ref<BreadcrumbItem[]>([
         {
             label: "Home",
@@ -51,7 +56,12 @@
             const cardResponse = await $fetch<Card>(
                 `http://localhost:8000/inventory/inventory/${listing.value.card_id}`
             );
+            const bidResponse = await $fetch<any>(
+                `http://localhost:8000/bid/bids/${listing.value.id}`
+            );
             listingCard.value = cardResponse;
+            bidInfo.value = bidResponse;
+            console.log(bidInfo);
             breadCrumb.value = [
                 {
                     label: "Home",
@@ -72,14 +82,17 @@
             highestBid.value = listing.value.highest_bid || 0;
 
             // Connect to WebSocket and subscribe to bid updates
-            WebSocketService.econnect("ws://localhost:15674/ws", "grading_topic", "*.auction", (message) => {
-                if (message.listing_id === id) {
-                    highestBid.value = message.highest_bid;
-                    console.log(`Highest bid updated to ${message.highest_bid}`);
+            WebSocketService.econnect(
+                "ws://localhost:15674/ws",
+                "grading_topic",
+                "*.auction",
+                (message) => {
+                    if (message.listing_id === id) {
+                        highestBid.value = message.highest_bid;
+                        console.log(`Highest bid updated to ${message.highest_bid}`);
+                    }
                 }
-            });
-
-
+            );
         } catch (err: any) {
             error.value = err.message || "Failed to load listing";
             console.error(error.value);
@@ -134,7 +147,6 @@
         }).format(highestBid.value);
     });
 
-
     // Implement placeBid
     async function placeBid() {
         console.log("Attempting to place bid: $" + bidAmount.value);
@@ -144,34 +156,35 @@
                 return;
             }
 
-            const response = await $fetch('http://localhost:8000/bid/bid', {
-                method: 'POST',
+            const response = await $fetch("http://localhost:8000/bid/bid", {
+                method: "POST",
                 body: {
                     auctionId: id, // ID of the listing
                     bidAmount: bidAmount.value, // User's bid amount
-                    buyerId: '123e4567-e89b-12d3-a456-426614174001', // Replace with actual user ID (if available)
+                    buyerId: "123e4567-e89b-12d3-a456-426614174001", // Replace with actual user ID (if available)
                 },
             });
 
             console.log("Bid placed successfully:", response);
             const updatedBidCount = (listing.value?.bid_count || 0) + 1;
 
-            const response2 = await $fetch(`http://localhost:8000/marketplace/api/marketplace/listings/${id}`, {
-                method: 'PUT',
-                body: {
-                    id: id, // ID of the listing
-                    highest_bid: bidAmount.value, // User's bid amount
-                    highest_bidder_id: '123e4567-e89b-12d3-a456-426614174001', // Replace with actual user ID (if available)
-                    bid_count: updatedBidCount,
-                },
-            });
+            const response2 = await $fetch(
+                `http://localhost:8000/marketplace/api/marketplace/listings/${id}`,
+                {
+                    method: "PUT",
+                    body: {
+                        id: id, // ID of the listing
+                        highest_bid: bidAmount.value, // User's bid amount
+                        highest_bidder_id: "123e4567-e89b-12d3-a456-426614174001", // Replace with actual user ID (if available)
+                        bid_count: updatedBidCount,
+                    },
+                }
+            );
 
             console.log("Listing data updated successfully:", response2);
-
         } catch (error) {
             console.error("Error placing bid:", error);
         }
-
     }
 
     // Implement placeOrder
@@ -225,7 +238,13 @@
                         <div class="grid grid-cols-2 grid-rows-2">
                             <div class="flex flex-col col-span-1 row-span-1">
                                 <p class="text-gray-500 text-sm">Current Bid</p>
-                                <p class="font-medium capitalize">{{ listing?.type == "auction" ? formattedHighestBid : formattedPrice }}</p>
+                                <p class="font-medium capitalize">
+                                    {{
+                                        listing?.type == "auction"
+                                            ? formattedHighestBid
+                                            : formattedPrice
+                                    }}
+                                </p>
                             </div>
                             <div class="flex flex-col col-span-1 row-span-1">
                                 <p class="text-gray-500 text-sm">Auction Ends In</p>
