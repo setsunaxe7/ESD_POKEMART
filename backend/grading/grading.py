@@ -22,6 +22,7 @@ queue_name = "grading"
 connection = None
 channel = None
 
+# RabbitMQ Connector
 def connectAMQP():
     global connection, channel
     print("  Connecting to AMQP broker...")
@@ -36,7 +37,7 @@ def connectAMQP():
         print(f"  Unable to connect to RabbitMQ.\n     {exception=}\n")
         exit(1)
 
-# Creation function, comes from websocket/ui
+# Creation function, comes from websocket/ui, takes in bkey create.grading EXACT
 def grade_card(channel, method, properties, body):
     result = json.loads(body)
     try:
@@ -62,16 +63,18 @@ def grade_card(channel, method, properties, body):
             "address": address,
             "status": "Created",
             "postalCode": postalCode, 
+            "result": "", 
+            
         }
 
         # Upload to Supabase storage
         response = supabase.table("grading").insert(data).execute()
         
-        if response.error is None:
-            print("Data inserted successfully:", response.data)
+        if response.data:
+            print(json.dumps(response.data))
         else:
-            print("Error inserting data:", response.error)
-        
+            print("error: No record found")
+
         # Default card status
         cardStatus = "Pending Grading"
         
@@ -134,24 +137,68 @@ def sendGradingAndNotify(gradingID, cardID, cardStatus, address, postalCode):
             "exception": ex_str
         }
 
-# Update function 
-# Suppose to take in bKey .update
+# takes in bkey get.grading EXACT
+def getDB(channel, method, properties, body):
+    result = json.loads(body)
+    print("\nReceived grading request:", result)
+    
+    try:
+        # print("\nReceived grading request:", result)
+        # Parse UUID from body
+        userID = result["userID"]
+        if not userID:
+            raise ValueError("Missing 'userID' in request body.")
+
+        # Query Supabase table
+        print(f"Querying Supabase for UserID: {userID}")
+        response = supabase.table("grading").select("*").eq("userID", userID).execute()
+
+        if response.data:
+            payload = json.dumps(response.data)
+        else:
+            payload = json.dumps({"error": "No record found"})
+
+        # Publish to RabbitMQ
+        print("Publishing data to RabbitMQ...")
+        channel.basic_publish(
+            exchange=exchange_name,
+            routing_key=".return",
+            body=payload
+        )
+    except Exception as e:
+        error_payload = json.dumps({"error": str(e)})
+        channel.basic_publish(
+            exchange=exchange_name,
+            routing_key=".return",
+            body=error_payload
+        )
+
+# Update function, takes in bkey .update
+def update(channel, method, propertites, body):
+    result = json.loads(body)
+    print(f"Grader message (JSON): {result}")
+    result_json = json.dumps(result)
+    channel.basic_publish(
+        exchange=exchange_name, routing_key="externalGrader.notify", body=result_json
+    )
+
 # incoming from externalGrader/ Delivery APIdef callback(channel, method, properties, body):
 def callback(channel, method, properties, body):
     try:
-        result = json.loads(body)
-        routing_key = method.routing_key  # Get the routing key
+        # Get the routing key
+        routing_key = method.routing_key  
 
         # Log or print the routing key and message
-        if "grading" in routing_key:
-            grade_card(channel, method, properties, body)
-        else:
+        if routing_key == "create.grading":
             print(f"Received message with routing key: {routing_key}")
-            print(f"Grader message (JSON): {result}")
-            result_json = json.dumps(result)
-            channel.basic_publish(
-                exchange=exchange_name, routing_key="externalGrader.notify", body=result_json
-            )
+            grade_card(channel, method, properties, body)
+        elif routing_key == "get.grading":
+            print(f"Received message with routing key: {routing_key}")
+            getDB(channel, method, properties, body)
+        elif ".update" in routing_key:
+            print(f"Received message with routing key: {routing_key}")
+            update(channel, method, properties, body)
+
     except Exception as e:
         print(f"Unable to parse JSON: {e=}")
         print(f"Grader message: {body}")

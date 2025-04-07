@@ -32,7 +32,6 @@ exchange_type = "topic"
 queue_name = "auction"  # Queue for auction updates
 
 
-
 # AMQP message for updating bid data
 def send_bid_update(listing_id, highest_bid):
     try:

@@ -84,6 +84,20 @@ services:
     depends_on:
       - redis-cache-service
 
+  # Payment
+  payment-service:
+    build:
+      context: ../backend/payment/
+    container_name: payment-service
+    restart: always
+    networks:
+      - bulba-net
+    env_file:
+      - ../backend/payment/.env  # Load environment variables from .env file
+    ports:
+      - "5007:5007"
+
+
 
   # Grading
   grading-service:
@@ -153,6 +167,7 @@ services:
       start_period: 50s
       timeout: 5s
 
+  # init queue and exchange
   rabbitmq-setup:
     build: ../backend/rabbitmq_setup
     container_name: amqp-setup
@@ -162,6 +177,15 @@ services:
     networks:
       - bulba-net
 
+  # # middleware for outsystems
+  # # THIS WORKS COMMENTED TO SAVE COST
+  # rabbitmq-middleware:
+  #   build: ../backend/rabbitmq_middleware
+  #   container_name: amqp-middleware
+  #   networks:
+  #     - bulba-net
+  #   depends_on:
+  #     - rabbitmq-setup
   #######################################
   # Redis Cache (For Bidding Microservice)
   #######################################
