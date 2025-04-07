@@ -126,6 +126,16 @@ def create_refund():
 
         refund = stripe.Refund.create(**refund_data)
 
+        # Update payment status in MongoDB using the existing route logic
+        result = bids_collection.update_one(
+            {"payment_intent_id": payment_intent_id},
+            {"$set": {"status": "refunded"}}
+        )
+
+        if result.matched_count == 0:
+            return jsonify({"error": "PaymentIntent not found"}), 404
+        
+
         return jsonify({"refund": refund}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400

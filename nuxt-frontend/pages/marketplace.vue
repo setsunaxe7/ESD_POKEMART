@@ -88,6 +88,12 @@
     // Computed filtered listings
     const filteredListings = computed(() => {
         return allListings.value.filter((listing) => {
+
+            // Only include listings with status == "active"
+            if (listing.status !== "active") {
+                return false;
+            }
+
             // Search query filter
             if (
                 filters.value.searchQuery &&

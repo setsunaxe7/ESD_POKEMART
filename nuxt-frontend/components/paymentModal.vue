@@ -131,6 +131,23 @@ const handlePayment = async () => {
                     },
                 });
 
+            // await $fetch(`http://localhost:8000/marketplace/api/marketplace/listings/${listingId}`, {
+            //     method: "PUT",
+            //     headers: {
+            //         "Content-Type": "application/json",
+            //     },
+            //     body: {
+            //         status: "closed", // Update the status to 'closed'
+            //     },
+            // });
+
+            await $fetch(`http://localhost:8000/marketplace/api/marketplace/listings/${listingId}`, {
+                method: 'PUT',
+                body: {
+                    status: "closed",
+                },
+            });
+
             paymentResult.value = "Payment successful!";
             emit("payment-success");
         }

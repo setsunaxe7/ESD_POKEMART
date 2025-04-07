@@ -54,6 +54,7 @@ def update_highest_bid_in_supabase(auction_id, highest_bid):
     except Exception as e:
         print(f"Error updating Supabase: {e}")
 
+#################################################################################################################
 
 @app.route('/')
 def home():
