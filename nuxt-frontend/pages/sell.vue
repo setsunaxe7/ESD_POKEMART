@@ -4,8 +4,13 @@
     import { ref, computed, onMounted } from "vue";
     const { cards, isLoading, error, fetchCards } = useCards();
 
+    const user = useSupabaseUser();
+    const userId: any = user.value?.id;
+    const userName: any = user.value?.user_metadata.display_name;
+
     interface ListingData {
         seller_id: string;
+        seller_name: string;
         card_id: number;
         title: string;
         description: string;
@@ -67,7 +72,10 @@
     ];
 
     // Fetch cards when component mounts
-    onMounted(fetchCards);
+    onMounted( async () => {
+        await fetchCards();
+        // selectedCard.value = cardOptions.value[0];
+    });
 
     const selectedCard = ref();
     const selectedGrade = ref();
@@ -90,7 +98,7 @@
         if (!cards.value) return [];
 
         return cards.value.map((card) => ({
-            label: card.name,
+            label: card.name + ' [' + card.rarity + ']',
             value: card.id,
             card: card,
         }));
@@ -143,7 +151,8 @@
 
             // Create listing data object
             const listingData: ListingData = {
-                seller_id: "123e4567-e89b-12d3-a456-426614174000", // Replace with actual user ID from auth
+                seller_id: userId, // Replace with actual user ID from auth
+                seller_name: userName,
                 card_id: selectedCard.value.value,
                 title: title.value,
                 description: description.value,

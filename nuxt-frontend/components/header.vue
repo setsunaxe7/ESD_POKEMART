@@ -23,6 +23,11 @@
             to: "/grading",
             active: computed(() => route.path.startsWith("/grading")),
         },
+        {
+            label: "Refund",
+            to: "/refund",
+            active: computed(() => route.path.startsWith("/refund")),
+        },
     ]);
 
     const user = useSupabaseUser();

@@ -9,6 +9,7 @@
     // Get the route to access the ID parameter
     const route = useRoute();
     const id = route.params.id as string;
+    const isLoading = ref(true);
 
     type PokemonCard = {
         id: string;
@@ -228,6 +229,8 @@
                 to: "/listing/" + id,
             },
         ];
+
+        isLoading.value = false;
     });
 </script>
 
@@ -235,8 +238,8 @@
     <UMain>
         <UContainer class="my-12">
             <UBreadcrumb :items="breadCrumb" />
-            <Loading class="mt-24" v-if="isTcgLoading && cardLoading"></Loading>
-            <div v-if="!(isTcgLoading && cardLoading)" class="grid grid-cols-7 gap-24 mt-12">
+            <Loading class="mt-24" v-if="isLoading"></Loading>
+            <div v-else class="grid grid-cols-7 gap-24 mt-12">
                 <div class="col-span-3">
                     <img class="w-full" :src="card?.high_res_image" />
                 </div>

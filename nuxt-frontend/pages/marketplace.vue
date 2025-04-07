@@ -264,7 +264,7 @@
             <Loading v-if="isLoading"></Loading>
             <div v-else class="flex flex-col lg:flex-row gap-8">
                 <!-- Sticky Side Menu for Filters -->
-                <div class="lg:w-1/4 sticky top-24 space-y-8 h-fit">
+                <div class="lg:w-1/4 lg:sticky block top-24 space-y-8 h-fit">
                     <UCard>
                         <h3 class="text-lg font-bold mb-4">Search</h3>
                         <UInput

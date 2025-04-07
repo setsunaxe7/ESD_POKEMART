@@ -16,6 +16,10 @@
             label: "Grading Service",
             to: "/grading",
         },
+        {
+            label: "Request Refund",
+            to: "/refund",
+        },
     ];
 </script>
 
