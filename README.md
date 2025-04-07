@@ -23,15 +23,9 @@ Backend:<br>
 1) Open a terminal and run the following commands:
 ```
 cd kong
-docker compose up -d
+run.bat
 ```
 Services might take a while to load.
-
-
-If amqp_setup.py isn't being updated in docker container run this instead
-```
-docker compose up --build --force-recreate -d
-```
 
 ## Technical Architecture Diagram
 [WIP]

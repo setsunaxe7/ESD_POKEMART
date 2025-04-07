@@ -64,26 +64,22 @@ def grade_card(channel, method, properties, body):
             "status": "Created",
             "postalCode": postalCode, 
             "result": "", 
-            
         }
 
         # Upload to Supabase storage
         response = supabase.table("grading").insert(data).execute()
         
         if response.data:
-            print(json.dumps(response.data))
+            print("Data from DB: " + json.dumps(response.data))
         else:
             print("error: No record found")
-
-        # Default card status
-        cardStatus = "Pending Grading"
         
-        # Connection to AMQP
-        if connection is None or not amqp_lib.is_connection_open(connection):
-            connectAMQP()
+        # Send to External Grader
+        result = send_grading(data)
         
-        # Send to External Grader and Notify User
-        result = sendGradingAndNotify(gradingID, cardID, cardStatus, address, postalCode)
+        # # Notify user
+        # print("Publishing notification request to RabbitMQ...")
+        # send_notify("creation.notify", data)
 
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -93,40 +89,21 @@ def grade_card(channel, method, properties, body):
 
         return jsonify({"code": 500, "message": "Internal error", "exception": ex_str}), 500
 
-# sendGradingAndNotify function send to external grader and inform user
-def sendGradingAndNotify(gradingID, cardID, cardStatus, address, postalCode):
-    gradingMessage = json.dumps({
-        "gradingID": gradingID,
-        "cardID": cardID,
-        "cardStatus": cardStatus,
-        "address": address,
-        "postalCode": postalCode
-    })
-
+# send_grading function send to external grader and inform user
+def send_grading(data):
     try:
+        data_json = json.dumps(data)
+        print(data_json)
+        # Connection to AMQP
+        if connection is None or not amqp_lib.is_connection_open(connection):
+            connectAMQP()
+        
         # Publish to RabbitMQ
-        print("  Publishing grading request to RabbitMQ...")
+        print("Publishing grading request to RabbitMQ...")
         channel.basic_publish(
-            exchange=exchange_name, routing_key="create.externalGrading", body=gradingMessage
+            exchange=exchange_name, routing_key="create.externalGrading", body=data_json
         )
         
-        notificationMessage = json.dumps({
-                "gradingID": gradingID,
-                "cardID": cardID,
-                "cardStatus": cardStatus,
-            })
-
-        print("  Publishing notification request to RabbitMQ...")
-        channel.basic_publish(
-            exchange=exchange_name, routing_key="creation.notify", body=notificationMessage
-        )
-
-        return {
-            "code": 201,
-            "status": "successful",
-            "gradingId": gradingID
-        }
-    
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -136,14 +113,14 @@ def sendGradingAndNotify(gradingID, cardID, cardStatus, address, postalCode):
             "message": "Internal error",
             "exception": ex_str
         }
-
+        
 # takes in bkey get.grading EXACT
-def getDB(channel, method, properties, body):
+def get_db(channel, method, properties, body):
     result = json.loads(body)
     print("\nReceived grading request:", result)
     
     try:
-        # print("\nReceived grading request:", result)
+        print("\nReceived grading request:", result)
         # Parse UUID from body
         userID = result["userID"]
         if not userID:
@@ -174,13 +151,54 @@ def getDB(channel, method, properties, body):
         )
 
 # Update function, takes in bkey .update
-def update(channel, method, propertites, body):
-    result = json.loads(body)
-    print(f"Grader message (JSON): {result}")
-    result_json = json.dumps(result)
+def update_grading(channel, method, propertites, body, routing_key):
+    try:
+        result = json.loads(body)
+        print(f"Grader message (JSON): {result}")
+        # result_json = json.dumps(result)
+        if "status" in routing_key:
+            response = supabase.table("grading").update({
+                "status": result["status"]
+                }).eq("gradingID", result["gradingID"]).execute()
+        elif "result" in routing_key:
+            response = supabase.table("grading").update({
+                "status": result["status"],
+                "result": result["result"]
+                }).eq("gradingID", result["gradingID"]).execute()
+        
+        # # Notify user
+        # send_notify("externalGrader.notify", result)
+        
+    except Exception as e:
+        error_payload = json.dumps({"error": str(e)})
+        channel.basic_publish(
+            exchange=exchange_name,
+            routing_key=".return",
+            body=error_payload
+        )
+
+# Notify function, sends rkey .notify to notification ms
+def send_notify(rKey, data):
+    # {
+    #     "Service": "Grading",
+    #     "Text": "",
+    #     "Timestamp": "2025-04-05T16:30:00Z",
+    #     "Data": {
+    #         "UserID": "Jag-000",
+    #         "CardID": "67890",
+    #         "Status": "Completed",
+    #         "GradingID": "5564312",
+    #         "ShippingID": "98765",
+    #         "PickupDate": "",
+    #         "AuctionID": "",
+    #         "Price": "",
+    #         "PhoneNumber": "+6598895901"
+    #     }
+    # }
     channel.basic_publish(
-        exchange=exchange_name, routing_key="externalGrader.notify", body=result_json
+        exchange=exchange_name, routing_key=rKey, body=data
     )
+
 
 # incoming from externalGrader/ Delivery APIdef callback(channel, method, properties, body):
 def callback(channel, method, properties, body):
@@ -189,15 +207,13 @@ def callback(channel, method, properties, body):
         routing_key = method.routing_key  
 
         # Log or print the routing key and message
+        print(f"Received message with routing key: {routing_key}")
         if routing_key == "create.grading":
-            print(f"Received message with routing key: {routing_key}")
             grade_card(channel, method, properties, body)
         elif routing_key == "get.grading":
-            print(f"Received message with routing key: {routing_key}")
-            getDB(channel, method, properties, body)
+            get_db(channel, method, properties, body)
         elif ".update" in routing_key:
-            print(f"Received message with routing key: {routing_key}")
-            update(channel, method, properties, body)
+            update_grading(channel, method, properties, body, routing_key)
 
     except Exception as e:
         print(f"Unable to parse JSON: {e=}")
