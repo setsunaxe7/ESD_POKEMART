@@ -5,18 +5,18 @@
     import type { Card } from "~/types/card";
     import WebSocketService from "../../services/websocketService.js";
     import PaymentModal from "~/components/paymentModal.vue";
+    import { SupabaseClient } from '@supabase/supabase-js';
+
+
+
 
     interface BidUpdateMessage {
         listing_id: string;
         highest_bid: number;
     }
 
-    interface BiddingInfo {
-        auctionId: string;
-        bidAmount: number;
-        buyerId: string;
-        timestamp: string;
-    }
+    const supabase = useSupabaseClient();
+
     const showPaymentModal = ref(false); // Controls visibility of the modal
     const paymentAmount = ref<number | null>(null); // Holds the price for the payment modal
 
@@ -32,6 +32,11 @@
     const bidAmount = ref<number | null>(null);
     const listingCard = ref<Card>();
     const highestBid = ref<number | null>(null);
+
+    // User data variables
+    const userId = ref<string | null>(null); // Store user ID
+    const displayName = ref<string | null>(null); // Store display name
+
     let breadCrumb = ref<BreadcrumbItem[]>([
         {
             label: "Home",
@@ -51,6 +56,7 @@
     // Fetch the specific listing by ID
     onMounted(async () => {
         try {
+            fetchUserData();
             isLoading.value = true;
             const response = await $fetch<Listing>(
                 `http://localhost:8000/marketplace/api/marketplace/listings/${id}`
@@ -147,6 +153,29 @@
         }).format(bidAmount);
     });
 
+    async function fetchUserData() {
+        try {
+            const { data, error } = await supabase.auth.getUser(); // Get user data from Supabase
+            if (error) {
+                console.error('Error fetching user data:', error);
+                return;
+            }
+            if (data && data.user) {
+                console.log('User ID:', data.user.id); // Unique identifier for the user
+                console.log('Display Name:', data.user.user_metadata?.display_name || 'N/A'); // Display name
+
+                // Store user data into reactive variables
+                userId.value = data.user.id;
+                displayName.value = data.user.user_metadata?.display_name || 'N/A';
+            } else {
+                console.log('No logged-in user found.');
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+        }
+    }
+
+
     // Implement placeBid
     async function placeBid() {
         console.log("Attempting to place bid: $" + bidAmount.value);
@@ -161,25 +190,23 @@
                 body: {
                     auctionId: id, // ID of the listing
                     bidAmount: bidAmount.value, // User's bid amount
-                    buyerId: "123e4567-e89b-12d3-a456-426614174001", // Replace with actual user ID (if available)
+                    buyerId: userId.value, // Replace with actual user ID (if available)
+                    timestamp: new Date().toISOString(), // Add the current timestamp
                 },
             });
 
             console.log("Bid placed successfully:", response);
             const updatedBidCount = (listing.value?.bid_count || 0) + 1;
 
-            const response2 = await $fetch(
-                `http://localhost:8000/marketplace/api/marketplace/listings/${id}`,
-                {
-                    method: "PUT",
-                    body: {
-                        id: id, // ID of the listing
-                        highest_bid: bidAmount.value, // User's bid amount
-                        highest_bidder_id: "123e4567-e89b-12d3-a456-426614174001", // Replace with actual user ID (if available)
-                        bid_count: updatedBidCount,
-                    },
-                }
-            );
+            const response2 = await $fetch(`http://localhost:8000/marketplace/api/marketplace/listings/${id}`, {
+                method: 'PUT',
+                body: {
+                    id: id, // ID of the listing
+                    highest_bid: bidAmount.value, // User's bid amount
+                    highest_bidder_id: userId.value, // Replace with actual user ID (if available)
+                    bid_count: updatedBidCount,
+                },
+            });
 
             console.log("Listing data updated successfully:", response2);
         } catch (error) {
@@ -277,7 +304,11 @@
                         :show="showPaymentModal"
                         :amount="paymentAmount * 100"
                         currency="USD"
-                        @close="showPaymentModal = false" />
+                        :user-id="userId || ''"
+                        :listing-id="id"
+                        @close="showPaymentModal = false"
+                    />
+
                 </div>
             </div>
         </UContainer>

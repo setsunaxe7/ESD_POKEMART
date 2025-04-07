@@ -12,7 +12,7 @@ const paymentResult = ref<string | null>(null);
 const isProcessing = ref(false);
 
 // Props passed from parent component
-const { show, amount, currency } = defineProps({
+const { show, amount, currency, userId, listingId } = defineProps({
     show: {
         type: Boolean,
         required: true,
@@ -24,6 +24,14 @@ const { show, amount, currency } = defineProps({
     currency: {
         type: String,
         default: "usd",
+    },
+    userId: {
+        type: String,
+        required: true, 
+    },
+    listingId: {
+        type: String,
+        required: true, 
     },
 });
 
@@ -74,7 +82,7 @@ const handlePayment = async () => {
         // Ensure amount is an integer
         const validAmount = parseInt(amount); // Convert amount to an integer
         const validCurrency = String(currency); // Ensure currency is a string
-        console.log("Valid Amount:", validAmount, "Currency:", validCurrency); // Log validated props
+        console.log("Valid Amount:", validAmount, "Currency:", validCurrency, "User ID:", userId, "Listing ID:", listingId); // Log validated props
 
         // Step 1: Call backend to create PaymentIntent
         const { clientSecret } = await $fetch<{ clientSecret: string }>(
@@ -87,6 +95,8 @@ const handlePayment = async () => {
                 body: { 
                     amount: validAmount,
                     currency: validCurrency,
+                    userId,
+                    listingId,
                 },
             }
         );
@@ -107,6 +117,20 @@ const handlePayment = async () => {
             paymentResult.value = `Payment failed: ${result.error.message}`;
             emit("payment-failed", result.error.message);
         } else {
+
+            console.log("Payment successful:", result.paymentIntent.status);
+            // Step 3: Update payment status in backend
+            await $fetch("http://localhost:8000/payment/update_payment_status", {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: {
+                        payment_intent_id: result.paymentIntent.id,
+                        status: result.paymentIntent.status,
+                    },
+                });
+
             paymentResult.value = "Payment successful!";
             emit("payment-success");
         }

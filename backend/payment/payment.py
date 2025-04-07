@@ -21,30 +21,14 @@ bids_collection = db["payment"]  # Collection Name
 @app.route("/create_payment_intent", methods=["POST"])
 def create_payment_intent():
     try:
-        # Extract Authorization header and JWT token
-        auth_header = request.headers.get("Authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
-            return jsonify({"error": "Authorization header missing or invalid"}), 401
-
-        jwt_token = auth_header.split(" ")[1]  # Extract the token part
-        logging.info(f"Extracted JWT Token: {jwt_token}")
-
-        # Decode JWT token to extract user ID (assuming no signature verification for simplicity)
-        try:
-            decoded_token = jwt.decode(jwt_token, options={"verify_signature": False})
-            user_id = decoded_token.get("sub")  # Extract user ID (subject)
-            if not user_id:
-                return jsonify({"error": "User ID missing in JWT token"}), 401
-        except Exception as e:
-            logging.error(f"Error decoding JWT token: {e}")
-            return jsonify({"error": "Invalid JWT token"}), 401
-
-        logging.warning(f"Received request data: {request.json}")  # Log incoming request data
+        logging.info(f"Received request data: {request.json}")  # Log incoming request data
 
         # Extract payment data from request
         data = request.json
         amount = data.get("amount")  # Amount in cents (e.g., $10 -> 1000)
         currency = data.get("currency", "usd")  # Default to USD
+        user_id = data.get("userId")
+        listing_id = data.get("listingId")
 
         # Validate amount
         if not amount or not isinstance(amount, int) or amount <= 0:
@@ -65,7 +49,8 @@ def create_payment_intent():
 
         # Store payment data in MongoDB
         payment_data = {
-            "user_id": user_id,                    # User ID from Supabase JWT token
+            "user_id": user_id,                    # buyer id
+            "listing_id": listing_id,              # listing id
             "payment_intent_id": payment_intent.id,  # Stripe PaymentIntent ID
             "amount": amount,                      # Payment amount in cents
             "currency": currency,                  # Currency code (e.g., usd)
@@ -83,36 +68,37 @@ def create_payment_intent():
         print(f"Error occurred: {str(e)}")  # Log unexpected errors
         logging.error(f"Error occurred: {str(e)}")
         return jsonify({"error": f"Server error: {str(e)}"}), 500
+    
+
+@app.route("/update_payment_status", methods=["PUT"])
+def update_payment_status():
     try:
+        # Extract data from request
         data = request.json
-        logging.warning(f"Received request data: {data}")  # Log incoming request data
+        payment_intent_id = data.get("payment_intent_id")
+        status = data.get("status")
 
-        amount = data.get("amount")  # Amount in cents (e.g., $10 -> 1000)
-        currency = data.get("currency", "usd")  # Default to USD
+        # Validate input
+        if not payment_intent_id or not status:
+            return jsonify({"error": "Missing required fields"}), 400
 
-        # Validate amount
-        if not amount or not isinstance(amount, int) or amount <= 0:
-            return jsonify({"error": "Invalid amount. Amount must be a positive integer in cents."}), 400
-
-        # Validate currency
-        if not isinstance(currency, str) or len(currency) != 3:
-            return jsonify({"error": "Invalid currency. Currency must be a valid ISO 4217 code (e.g., 'usd')."}), 400
-
-        # Create a payment intent using Stripe's API
-        payment_intent = stripe.PaymentIntent.create(
-            amount=amount,
-            currency=currency,
-            payment_method_types=["card"]
+        # Update payment status in MongoDB
+        result = bids_collection.update_one(
+            {"payment_intent_id": payment_intent_id},
+            {"$set": {"status": status}}
         )
 
-        print(f"Created PaymentIntent: {payment_intent.id}")  # Log successful PaymentIntent creation
-        return jsonify({"clientSecret": payment_intent.client_secret}), 200
+        if result.matched_count == 0:
+            return jsonify({"error": "PaymentIntent not found"}), 404
+
+        return jsonify({"message": "Payment status updated successfully"}), 200
 
     except Exception as e:
-        print(f"Error occurred: {str(e)}")  # Log unexpected errors
-        return jsonify({"error": f"Server error: {str(e)}"}), 500
+        logging.error(f"Error occurred while updating payment status: {e}")
+        return jsonify({"error": str(e)}), 500
 
-    
+
+
 
 @app.route("/refund", methods=["POST"])
 def create_refund():
