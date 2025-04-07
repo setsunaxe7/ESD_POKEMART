@@ -32,6 +32,7 @@ exchange_type = "topic"
 queue_name = "auction"  # Queue for auction updates
 
 
+
 # AMQP message for updating bid data
 def send_bid_update(listing_id, highest_bid):
     try:
@@ -78,6 +79,7 @@ def place_bid():
     auction_id = data.get("auctionId")
     bid_amount = float(data.get("bidAmount"))  # Ensure it's a float
     bidder_id = data.get("buyerId")
+    timestamp = data.get("timestamp")
 
     if not all([auction_id, bid_amount, bidder_id]):
         return jsonify({"error": "Missing required fields"}), 400
@@ -93,7 +95,8 @@ def place_bid():
     new_bid = {
         "auctionId": auction_id,
         "buyerId": bidder_id,
-        "bidAmount": bid_amount
+        "bidAmount": bid_amount,
+        "timestamp": timestamp,
     }
     bids_collection.insert_one(new_bid)
 

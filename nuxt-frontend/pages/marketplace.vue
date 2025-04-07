@@ -39,17 +39,23 @@
             }
 
             // Connect to WebSocket server
-            WebSocketService.connect("ws://localhost:15674/ws");
-            WebSocketService.subscribeToBids((message) => {
-                const { listing_id, highest_bid } = message;
+            WebSocketService.econnect("ws://localhost:15674/ws",  "grading_topic", "*.auction", (message) => {
+              const { listing_id, highest_bid } = message; // Destructure the message object
 
-                // Find the relevant listing and update its highest_bid dynamically
-                const listingToUpdate = listings.value.find(
-                    (listing) => listing.id === listing_id && listing.type === "auction"
+              // Find the index of the relevant listing in the listings array
+              const index = listings.value.findIndex(
+                  (listing) => listing.id === listing_id && listing.type === "auction"
                 );
-                if (listingToUpdate) {
-                    listingToUpdate.highest_bid = highest_bid;
-                }
+
+              if (index !== -1) {
+                // Replace the entire object at the found index to trigger reactivity
+                listings.value[index] = {
+                  ...listings.value[index], // Keep other properties unchanged
+                  highest_bid,              // Update the highest_bid property
+                };
+                console.log(`Updated highest bid for listing ${listing_id}: ${highest_bid}`);
+              }
+                
                 const route = useRoute();
                 if (route.query.page) {
                     const pageNum = parseInt(route.query.page as string);
@@ -64,6 +70,11 @@
         } finally {
             isLoading.value = false;
         }
+    });
+
+    // Disconnect WebSocket on component unmount
+    onUnmounted(() => {
+      WebSocketService.disconnect();
     });
 
     // Filter states
