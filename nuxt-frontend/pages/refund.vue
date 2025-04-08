@@ -1,179 +1,220 @@
 <script setup lang="ts">
-    import { USelectMenu } from "#components";
-    import axios from "axios";
+import { USelectMenu } from "#components";
+import axios from "axios";
+import { createClient } from "@supabase/supabase-js";
 
-    const payments = ref([]);
-    const listings = ref([]);
-    const selectedTransaction = ref(null);
-    const selectedReason = ref(null);
-    const refundReason = ["Card Damaged", "Item not as described", "Others"];
-    const elaboration = ref("");
-    const transactionOptions = ref([]);
-    const imageFile = ref(null);
+const SUPABASE_URL = "https://gixgfsneaxermosckfdl.supabase.co";
+const SUPABASE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpeGdmc25lYXhlcm1vc2NrZmRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwOTg1NDAsImV4cCI6MjA1OTY3NDU0MH0._mg4VE04PMfCIGuF7IVcVca-hZJjyGTdGaMbTP6EnwU";
 
-    const handleFileChange = (event: any) => {
-        imageFile.value = event.target.files[0];
-    };
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // Get user payments data
-    const getUserPayments = async () => {
-        const userId = "d4abad07-1209-4170-b4d5-bd1d088cfde1";
+const payments = ref([]);
+const listings = ref([]);
+const selectedTransaction = ref(null);
+const selectedReason = ref(null);
+const refundReason = ["Card Damaged", "Item not as described", "Others"];
+const elaboration = ref("");
+const transactionOptions = ref([]);
+const imageFile = ref(null);
 
-        try {
-            const response = await axios.get(`http://localhost:8000/payment/payments/${userId}`);
+const handleFileChange = (event: any) => {
+  imageFile.value = event.target.files[0];
+};
 
-            // Check if the request was successful
-            if (response.status === 200) {
-                console.log("Payment information retrieved successfully:", response.data);
-                return response.data.payments;
-            }
-        } catch (error) {
-            // Handle errors
-            if (error.response) {
-                // The request was made and the server responded with a status code outside of 2xx
-                console.error("Error fetching payment data:", error.response.data);
-                console.error("Status:", error.response.status);
-            } else if (error.request) {
-                // The request was made but no response was received
-                console.error("No response received:", error.request);
-            } else {
-                // Something happened in setting up the request that triggered an Error
-                console.error("Error setting up request:", error.message);
-            }
-            throw error;
-        }
-    };
+// Get user payments data
+const getUserPayments = async () => {
+  const userId = "cfacd6c7-074e-4201-9413-6e8ad5bb7997";
 
-    // Get listings based on listing IDs
-    const getListings = async (listingIds) => {
-        try {
-            const response = await axios.post(
-                "http://localhost:8000/marketplace/api/marketplace/listings/batch",
-                { listing_ids: listingIds }
-            );
+  try {
+    const response = await axios.get(
+      `http://localhost:8000/payment/payments/${userId}`
+    );
 
-            if (response.status === 200) {
-                console.log("Listings retrieved successfully:", response.data);
-                return response.data;
-            }
-        } catch (error) {
-            console.error("Error fetching listings:", error.response?.data || error.message);
-            throw error;
-        }
-    };
+    if (response.status === 200) {
+      console.log("Payment information retrieved successfully:", response.data);
+      return response.data.payments;
+    }
+  } catch (error) {
+    console.error("Error fetching payment data:", error);
+    throw error;
+  }
+};
 
-    // Format payment data for select menu
-    const formatPaymentOptions = (paymentsData, listingsData) => {
-        // Create a map of listing ID to listing details for quick lookups
-        const listingMap = {};
-        listingsData.forEach((listing) => {
-            listingMap[listing.id] = listing;
-        });
+// Get listings based on listing IDs
+const getListings = async (listingIds) => {
+  try {
+    const response = await axios.post(
+      "http://localhost:8000/marketplace/api/marketplace/listings/batch",
+      { listing_ids: listingIds }
+    );
 
-        return paymentsData
-            .filter((payment) => payment.status === "succeeded") // Only show successful payments
-            .map((payment) => {
-                const listing = listingMap[payment.listing_id];
-                const amount = (payment.amount / 100).toFixed(2); // Convert cents to dollars
+    if (response.status === 200) {
+      console.log("Listings retrieved successfully:", response.data);
+      return response.data;
+    }
+  } catch (error) {
+    console.error("Error fetching listings:", error);
+    throw error;
+  }
+};
 
-                return {
-                    label: `${listing?.title || "Unknown item"} - $${amount}`,
-                    value: payment.payment_intent_id,
-                    paymentData: payment,
-                    listingData: listing,
-                };
-            });
-    };
+// Format payment data for select menu
+const formatPaymentOptions = (paymentsData, listingsData) => {
+  const listingMap = {};
+  listingsData.forEach((listing) => {
+    listingMap[listing.id] = listing;
+  });
 
-    // Submit refund request
-
-    onMounted(async () => {
-        try {
-            // Get payment data
-            const paymentsData = await getUserPayments();
-            payments.value = paymentsData || [];
-            console.log("Total payments:", payments.value.length);
-
-            if (payments.value.length > 0) {
-                // Extract unique listing IDs from payments
-                const listingIds = [
-                    ...new Set(
-                        payments.value
-                            .filter((p) => p.listing_id) // Filter out payments without listing_id
-                            .map((p) => p.listing_id)
-                    ),
-                ];
-                console.log("Listing IDs to fetch:", listingIds);
-
-                // Fetch listing details for these IDs
-                const listingsData = await getListings(listingIds);
-                listings.value = listingsData || [];
-                console.log("Listings fetched:", listings.value.length);
-
-                // Format options for the select menu
-                transactionOptions.value = formatPaymentOptions(payments.value, listings.value);
-            }
-        } catch (err) {
-            console.error("Failed to initialize page:", err);
-        }
+  return paymentsData
+    .filter((payment) => payment.status === "succeeded")
+    .map((payment) => {
+      const listing = listingMap[payment.listing_id];
+      const amount = (payment.amount / 100).toFixed(2);
+      return {
+        label: `${listing?.title || "Unknown item"} - $${amount}`,
+        value: payment.payment_intent_id,
+        paymentData: payment,
+        listingData: listing,
+      };
     });
+};
+
+// Submit refund request
+const submitRefund = async () => {
+  if (!selectedTransaction.value || !selectedReason.value || !imageFile.value) {
+    alert("Please fill in all required fields.");
+    return;
+  }
+
+  const userId = "cfacd6c7-074e-4201-9413-6e8ad5bb7997";
+  const transactionId = selectedTransaction.value;
+  const reason = selectedReason.value;
+  const cardId = selectedTransaction.value.paymentData.listing_id;
+  const file = imageFile.value;
+
+  try {
+    // Upload image to Supabase
+    const fileName = `${Date.now()}_${file.name}`;
+    const { error } = await supabase.storage
+      .from("refund-photos")
+      .upload(fileName, file);
+
+    if (error) {
+      console.error("Image upload failed:", error);
+      alert("Image upload failed.");
+      return;
+    }
+
+    const imageURL = `https://gixgfsneaxermosckfdl.supabase.co/storage/v1/object/public/refund-photos/${fileName}`;
+
+    // Send to composite microservice
+    await axios.post("http://localhost:8000/refund/refund-process", {
+      userId,
+      cardId,
+      imageURL,
+      transactionId: transactionId,
+      reason: reason.toLowerCase().includes("damaged")
+        ? "damaged"
+        : "not as described",
+    });
+
+    alert("Refund request submitted successfully!");
+  } catch (err) {
+    console.error("Submission failed:", err);
+    alert("Failed to submit refund request.");
+  }
+};
+
+onMounted(async () => {
+  try {
+    const paymentsData = await getUserPayments();
+    payments.value = paymentsData || [];
+    if (payments.value.length > 0) {
+      const listingIds = [
+        ...new Set(
+          payments.value
+            .filter((p) => p.listing_id)
+            .map((p) => p.listing_id)
+        ),
+      ];
+      const listingsData = await getListings(listingIds);
+      listings.value = listingsData || [];
+      transactionOptions.value = formatPaymentOptions(
+        payments.value,
+        listings.value
+      );
+    }
+  } catch (err) {
+    console.error("Failed to initialize page:", err);
+  }
+});
 </script>
 
 <template>
-    <UMain class="min-h-[calc(100vh-var(--header-height)-var(--footer-height))]">
-        <UContainer>
-            <UPageSection
-                title="Refund Request"
-                description="Submit a refund request for an unsatisfactory order"
-                :ui="{ container: 'lg:py-24' }" />
-            <UCard class="p-4 mb-8">
-                <div class="space-y-8">
-                    <div class="space-y-2">
-                        <h1 class="text-2xl font-bold">Request form</h1>
-                        <p class="text-gray-500">
-                            Fill up this form accordingly to submit a refund request for review
-                        </p>
-                    </div>
-                    <div class="grid grid-cols-3 gap-12">
-                        <div class="col-span-2 flex flex-col space-y-6">
-                            <div class="space-y-2">
-                                <p class="font-medium">Choose an order</p>
-                                <USelectMenu
-                                    v-model="selectedTransaction"
-                                    class="w-3/4"
-                                    :items="transactionOptions"
-                                    placeholder="Select transaction"></USelectMenu>
-                            </div>
-                            <div class="space-y-2">
-                                <p class="font-medium">Reason for request</p>
-                                <USelectMenu
-                                    v-model="selectedReason"
-                                    class="w-3/4"
-                                    :items="refundReason"
-                                    placeholder="Select reason"></USelectMenu>
-                            </div>
-                            <div class="space-y-2">
-                                <p class="font-medium">Elaboration for reason</p>
-                                <UTextarea
-                                    v-model="elaboration"
-                                    class="w-3/4"
-                                    placeholder="Provide a detailed explanation for the reason of this refund request"
-                                    :rows="4"></UTextarea>
-                            </div>
-                            <div>
-                                <p class="font-medium">Upload evidence</p>
-                                <UInput
-                                    class="mt-2"
-                                    type="file"
-                                    @change="handleFileChange"></UInput>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </UCard>
-            <div class="w-full flex">
-                <UButton size="xl" :block="true" class="w-1/2 m-auto">Submit Request</UButton>
+  <UMain class="min-h-[calc(100vh-var(--header-height)-var(--footer-height))]">
+    <UContainer>
+      <UPageSection
+        title="Refund Request"
+        description="Submit a refund request for an unsatisfactory order"
+        :ui="{ container: 'lg:py-24' }"
+      />
+      <UCard class="p-4 mb-8">
+        <div class="space-y-8">
+          <div class="space-y-2">
+            <h1 class="text-2xl font-bold">Request form</h1>
+            <p class="text-gray-500">
+              Fill up this form accordingly to submit a refund request for
+              review
+            </p>
+          </div>
+          <div class="grid grid-cols-3 gap-12">
+            <div class="col-span-2 flex flex-col space-y-6">
+              <div class="space-y-2">
+                <p class="font-medium">Choose an order</p>
+                <USelectMenu
+                  v-model="selectedTransaction"
+                  class="w-3/4"
+                  :items="transactionOptions"
+                  placeholder="Select transaction"
+                />
+              </div>
+              <div class="space-y-2">
+                <p class="font-medium">Reason for request</p>
+                <USelectMenu
+                  v-model="selectedReason"
+                  class="w-3/4"
+                  :items="refundReason"
+                  placeholder="Select reason"
+                />
+              </div>
+              <div class="space-y-2">
+                <p class="font-medium">Elaboration for reason</p>
+                <UTextarea
+                  v-model="elaboration"
+                  class="w-3/4"
+                  placeholder="Provide a detailed explanation for the reason of this refund request"
+                  :rows="4"
+                />
+              </div>
+              <div>
+                <p class="font-medium">Upload evidence</p>
+                <UInput class="mt-2" type="file" @change="handleFileChange" />
+              </div>
             </div>
-        </UContainer>
-    </UMain>
+          </div>
+        </div>
+      </UCard>
+      <div class="w-full flex">
+        <UButton
+          size="xl"
+          :block="true"
+          class="w-1/2 m-auto"
+          @click="submitRefund"
+        >
+          Submit Request
+        </UButton>
+      </div>
+    </UContainer>
+  </UMain>
 </template>

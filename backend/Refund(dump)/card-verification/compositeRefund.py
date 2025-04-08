@@ -4,17 +4,25 @@ import logging
 import requests
 import pika
 import json
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
+# Upload directory
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 # Config for other microservices
-PAYMENT_URL = "http://localhost:5007/refund"
+PAYMENT_URL = "http://localhost:8000/payment/refund"
 NOTIFICATION_URL = "https://personal-gvra7qzz.outsystemscloud.com/Notification/rest/NotificationAPI/api/notification/receive"
+CARD_VERIFICATION_URL = "http://localhost:3005/verify"
 
 # RabbitMQ config
-exchange_name = "refund_topic"
-routing_key = "refund.notify"
+exchange_name = "grading_topic"
+routing_key = "*.notify"
 
 # Set up RabbitMQ connection
 def publish_notification(message):
@@ -50,7 +58,8 @@ def send_external_notification(notification_data):
                 "PickupDate": "",
                 "AuctionID": "",
                 "Price": "",
-                "PhoneNumber": "+6598895901"
+                "PhoneNumber": "+6598895901",
+                "requestId": "a0baa8cc-ee1b-4c45-9f75-8a7fa2c7d342"
             }
         })
 
@@ -62,7 +71,28 @@ def send_external_notification(notification_data):
     except Exception as e:
         logging.error(f"Error sending notification to OutSystems: {e}")
 
-# Endpoint to receive inspection results
+@app.route('/refund-process', methods=['POST'])
+def start_refund_process():
+    try:
+        # Forward form fields and file(s) as-is
+        data = {key: request.form[key] for key in request.form}
+        files = {
+            key: (file.filename, file.stream, file.mimetype)
+            for key, file in request.files.items()
+        }
+
+        # Send to card verification service
+        response = requests.post('http://localhost:3005/verify', data=data, files=files)
+
+        return jsonify({'message': 'Forwarded successfully'}), response.status_code
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+
 @app.route('/update-inspection-result', methods=['POST'])
 def update_inspection_result():
     try:
@@ -82,46 +112,32 @@ def update_inspection_result():
             logging.info("Initiating refund process...")
 
             refund_payload = {
-                'userId': user_id,
-                'transactionId': transaction_id,
-                'cardId': card_id
+                'payment_intent_id': transaction_id
             }
 
             payment_response = requests.post(PAYMENT_URL, json=refund_payload)
 
             if payment_response.status_code == 200:
                 logging.info("Refund successful, notifying user")
-
-                notification = {
-                    "Service": "Refund",
-                    "CardID": card_id,
-                    "Status": "Refund Successful",
-                    "TimeStamp": datetime.now().isoformat()
-                }
-                publish_notification(notification)
-                send_external_notification(notification)
-
+                status_msg = "Refund Successful"
             else:
                 logging.warning(f"Refund failed: {payment_response.text}")
-                notification = {
-                    "Service": "Refund",
-                    "CardID": card_id,
-                    "Status": "Refund Failed",
-                    "TimeStamp": datetime.now().isoformat()
-                }
-                publish_notification(notification)
-                send_external_notification(notification)
+                status_msg = "Refund Failed"
 
         elif inspection_result == 'Reject':
-            logging.info("Refund request rejected: Card is in good condition.")
-            notification = {
-                "Service": "Refund",
-                "CardID": card_id,
-                "Status": "Refund Rejected",
-                "TimeStamp": datetime.now().isoformat()
-            }
-            publish_notification(notification)
-            send_external_notification(notification)
+            logging.info("Refund request rejected.")
+            status_msg = "Refund Rejected"
+
+        notification = {
+            "Service": "Refund",
+            "CardID": card_id,
+            "Status": status_msg,
+            "TimeStamp": datetime.now().isoformat(),
+            "UserID": user_id
+        }
+
+        publish_notification(notification)
+        send_external_notification(notification)
 
         return jsonify({
             'message': 'Inspection result processed successfully.',
@@ -135,5 +151,6 @@ def update_inspection_result():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
 
 
