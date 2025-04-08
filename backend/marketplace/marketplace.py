@@ -9,12 +9,23 @@ import asyncio
 import pika
 from datetime import datetime, timedelta
 import time
-import schedule
 import logging
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
+
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,  # Set the minimum log level to DEBUG
+)
+
+# Initialize APScheduler
+scheduler = BackgroundScheduler()
+scheduler.start()
 
 
 # Supabase configuration
@@ -66,6 +77,8 @@ RABBITMQ_PORT = 5672
 RABBITMQ_EXCHANGE = "grading_topic"
 RABBITMQ_ROUTING_KEY = "*.notify"
 
+logging.warning(f"OK LOGGING DID RUN....")
+
 # Function to publish a message to RabbitMQ
 def publish_to_rabbitmq(message):
     try:
@@ -73,7 +86,7 @@ def publish_to_rabbitmq(message):
         channel = connection.channel()
 
         # Declare the exchange
-        channel.exchange_declare(exchange=RABBITMQ_EXCHANGE, exchange_type="topic")
+        channel.exchange_declare(exchange=RABBITMQ_EXCHANGE, exchange_type="topic", durable=True)
 
         # Publish the message
         channel.basic_publish(
@@ -93,46 +106,58 @@ def publish_to_rabbitmq(message):
 # Function to query Supabase and publish messages
 def check_and_publish():
     try:
-        # Calculate the time window
-        now = datetime
-        time_window_start = now - timedelta(seconds=75)  # 1 minute 15 seconds
-        logging.warning(f"Time window start: {time_window_start}, Now: {now}")
+        with app.app_context():  # Ensure Flask context is available if needed
+            logging.warning("Scheduler triggered: check_and_publish started.")
 
-        # Query Supabase for relevant entries
-        query_result = (
-            supabase.table("marketplace")
-            .select("id, card_id, status, highest_bid, auction_end_date")
-            .eq("status", "closed")
-            .gte("auction_end_date", time_window_start.isoformat())
-            .lte("auction_end_date", now.isoformat())
-            .execute()
-        )
+            # Calculate the time window
+            now = datetime.now()
+            time_window_start = now - timedelta(seconds=75)
+            logging.warning(f"Time window start: {time_window_start}, Now: {now}")
 
-        logging.info(f"Query result: {query_result.data}")
-        rows = query_result.data
+            # Query Supabase for relevant entries
+            query_result = (
+                supabase.table("marketplace")
+                .select("id, card_id, status, highest_bid, auction_end_date")
+                .eq("status", "closed")
+                .gte("auction_end_date", time_window_start.isoformat())
+                .lte("auction_end_date", now.isoformat())
+                .execute()
+            )
 
-        # Publish a message for each entry
-        for row in rows:
-            message = {
-                "Service": "Bidding",
-                "Text": "",
-                "Timestamp": row["auction_end_date"],
-                "Data": {
-                    "UserID": "Jag-000",  # Replace with dynamic user ID if needed
-                    "CardID": row["card_id"],
-                    "Status": row["status"],
-                    "AuctionID": row["id"],
-                    "Price": row["highest_bid"],
-                    "PhoneNumber": "+6598895901",
-                },
-            }
-            publish_to_rabbitmq(message)
+            logging.info(f"Query result: {query_result.data}")
+            rows = query_result.data
+
+            # Publish a message for each entry
+            for row in rows:
+                message = {
+                    "Service": "Bidding",
+                    "Text": "",
+                    "Timestamp": row["auction_end_date"],
+                    "Data": {
+                        "UserID": row["highest_bidder_id"],  # Replace with dynamic user ID if needed
+                        "CardID": row["card_id"],
+                        "Status": row["status"],
+                        "AuctionID": row["id"],
+                        "Price": row["highest_bid"],
+                        "PhoneNumber": "+6598895901",
+                    },
+                }
+                logging.debug(f"Publishing message: {message}")
+                publish_to_rabbitmq(message)
 
     except Exception as e:
-        print(f"Error querying database or publishing messages: {e}")
+        logging.error(f"Error querying database or publishing messages: {e}")
 
-# Schedule the job to run every minute
-schedule.every(1).minutes.do(check_and_publish)
+
+# Add a cron job to run every minute using APScheduler
+scheduler.add_job(
+    func=check_and_publish,
+    trigger=CronTrigger.from_crontab("* * * * *"),  # Cron expression for every minute
+    id="send_auction_notifications",
+    replace_existing=True,
+)
+logging.info("Scheduled job: send_auction_notifications")
+
 
 #################################################################################################################
 
@@ -376,9 +401,8 @@ def get_listings_batch():
         return jsonify({"error": str(e)}), 500
 
 
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5004, debug=True)
-    print("Starting scheduler...")
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+
+
