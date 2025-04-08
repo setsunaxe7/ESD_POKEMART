@@ -6,6 +6,10 @@ import uuid
 import os
 import redis
 import asyncio
+import pika
+from datetime import datetime, timedelta
+import schedule
+import logging
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -52,6 +56,82 @@ def update_highest_bid_in_supabase(auction_id, highest_bid):
         }).eq('auction_id', auction_id).execute()
     except Exception as e:
         print(f"Error updating Supabase: {e}")
+
+#################################################################################################################
+
+# RabbitMQ configuration
+RABBITMQ_HOST = "rabbitmq"
+RABBITMQ_PORT = 5672
+RABBITMQ_EXCHANGE = "grading_topic"
+RABBITMQ_ROUTING_KEY = "*.notify"
+
+# Function to publish a message to RabbitMQ
+def publish_to_rabbitmq(message):
+    try:
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
+        channel = connection.channel()
+
+        # Declare the exchange
+        channel.exchange_declare(exchange=RABBITMQ_EXCHANGE, exchange_type="topic")
+
+        # Publish the message
+        channel.basic_publish(
+            exchange=RABBITMQ_EXCHANGE,
+            routing_key=RABBITMQ_ROUTING_KEY,
+            body=json.dumps(message),
+            properties=pika.BasicProperties(content_type="application/json"),
+        )
+
+        print(f"Published message: {message}")
+    except Exception as e:
+        print(f"Error publishing message to RabbitMQ: {e}")
+    finally:
+        if "connection" in locals() and connection.is_open:
+            connection.close()
+
+# Function to query Supabase and publish messages
+def check_and_publish():
+    try:
+        # Calculate the time window
+        now = datetime
+        time_window_start = now - timedelta(seconds=75)  # 1 minute 15 seconds
+        logging.info(f"Time window start: {time_window_start}, Now: {now}")
+
+        # Query Supabase for relevant entries
+        query_result = (
+            supabase.table("marketplace")
+            .select("id, card_id, status, highest_bid, auction_end_date")
+            .eq("status", "closed")
+            .gte("auction_end_date", time_window_start.isoformat())
+            .lte("auction_end_date", now.isoformat())
+            .execute()
+        )
+
+        logging.info(f"Query result: {query_result.data}")
+        rows = query_result.data
+
+        # Publish a message for each entry
+        for row in rows:
+            message = {
+                "Service": "Bidding",
+                "Text": "",
+                "Timestamp": row["auction_end_date"],
+                "Data": {
+                    "UserID": "Jag-000",  # Replace with dynamic user ID if needed
+                    "CardID": row["card_id"],
+                    "Status": row["status"],
+                    "AuctionID": row["id"],
+                    "Price": row["highest_bid"],
+                    "PhoneNumber": "+6598895901",
+                },
+            }
+            publish_to_rabbitmq(message)
+
+    except Exception as e:
+        print(f"Error querying database or publishing messages: {e}")
+
+# Schedule the job to run every minute
+schedule.every(1).minutes.do(check_and_publish)
 
 #################################################################################################################
 
@@ -253,3 +333,7 @@ def delete_listing(listing_id):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5004, debug=True)
+    print("Starting scheduler...")
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
