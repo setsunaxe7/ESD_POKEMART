@@ -9,6 +9,11 @@
     const refundReason = ["Card Damaged", "Item not as described", "Others"];
     const elaboration = ref("");
     const transactionOptions = ref([]);
+    const imageFile = ref(null);
+
+    const handleFileChange = (event: any) => {
+        imageFile.value = event.target.files[0];
+    };
 
     // Get user payments data
     const getUserPayments = async () => {
@@ -81,37 +86,6 @@
     };
 
     // Submit refund request
-    // const submitRefundRequest = async () => {
-    //     if (!selectedTransaction.value || !selectedReason.value) {
-    //         alert("Please select a transaction and reason for refund");
-    //         return;
-    //     }
-
-    //     const payment = payments.value.find(
-    //         (p) => p.payment_intent_id === selectedTransaction.value
-    //     );
-
-    //     if (!payment) return;
-
-    //     try {
-    //         const response = await axios.post("http://localhost:8000/payment/refund", {
-    //             payment_intent_id: payment.payment_intent_id,
-    //             reason: selectedReason.value,
-    //             amount: payment.amount, // Full refund
-    //         });
-
-    //         if (response.status === 200) {
-    //             alert("Refund request submitted successfully");
-    //             // Reset form
-    //             selectedTransaction.value = null;
-    //             selectedReason.value = null;
-    //             elaboration.value = "";
-    //         }
-    //     } catch (error) {
-    //         console.error("Error submitting refund:", error);
-    //         alert("Failed to submit refund request");
-    //     }
-    // };
 
     onMounted(async () => {
         try {
@@ -185,6 +159,13 @@
                                     class="w-3/4"
                                     placeholder="Provide a detailed explanation for the reason of this refund request"
                                     :rows="4"></UTextarea>
+                            </div>
+                            <div>
+                                <p class="font-medium">Upload evidence</p>
+                                <UInput
+                                    class="mt-2"
+                                    type="file"
+                                    @change="handleFileChange"></UInput>
                             </div>
                         </div>
                     </div>
