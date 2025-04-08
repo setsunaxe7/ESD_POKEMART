@@ -179,13 +179,13 @@ services:
 
   # # middleware for outsystems
   # # THIS WORKS COMMENTED TO SAVE COST
-  # rabbitmq-middleware:
-  #   build: ../backend/rabbitmq_middleware
-  #   container_name: amqp-middleware
-  #   networks:
-  #     - bulba-net
-  #   depends_on:
-  #     - rabbitmq-setup
+  rabbitmq-middleware:
+    build: ../backend/rabbitmq_middleware
+    container_name: amqp-middleware
+    networks:
+      - bulba-net
+    depends_on:
+      - rabbitmq-setup
   #######################################
   # Redis Cache (For Bidding Microservice)
   #######################################

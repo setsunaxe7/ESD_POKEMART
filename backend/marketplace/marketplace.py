@@ -8,6 +8,7 @@ import redis
 import asyncio
 import pika
 from datetime import datetime, timedelta
+import time
 import schedule
 import logging
 
@@ -95,7 +96,7 @@ def check_and_publish():
         # Calculate the time window
         now = datetime
         time_window_start = now - timedelta(seconds=75)  # 1 minute 15 seconds
-        logging.info(f"Time window start: {time_window_start}, Now: {now}")
+        logging.warning(f"Time window start: {time_window_start}, Now: {now}")
 
         # Query Supabase for relevant entries
         query_result = (
