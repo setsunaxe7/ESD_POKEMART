@@ -165,6 +165,7 @@
         }
         const jsonStr = {
             address: address.value,
+            cardName: cardMap.value[cardId.value].name,
             cardID: cardId.value,
             postalCode: postalCode.value,
             userID: uuid.value,

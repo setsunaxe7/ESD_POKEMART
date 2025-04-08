@@ -97,8 +97,6 @@ services:
     ports:
       - "5007:5007"
 
-
-
   # Grading
   grading-service:
     build:
@@ -109,8 +107,6 @@ services:
       - bulba-net
     env_file:
       - ../backend/grading/.env  # Load environment variables from .env file
-    # ports:
-    #   - "5005:5005"
     depends_on:
       - rabbitmq-setup
 
@@ -122,10 +118,8 @@ services:
     restart: always
     networks:
       - bulba-net
-    # env_file:
-      # - ../backend/external_grading/.env  # Load environment variables from .env file
-    # ports:
-    #   - "5006:5006"
+    env_file:
+      - ../backend/external_grading/.env  # Load environment variables from .env file
     depends_on:
       - rabbitmq-setup
 
@@ -137,10 +131,8 @@ services:
     restart: always
     networks:
       - bulba-net
-    # env_file:
-      # - ../backend/delivery/.env  # Load environment variables from .env file
-    # ports:
-    #   - "5007:5007"
+    env_file:
+      - ../backend/delivery/.env  # Load environment variables from .env file
     depends_on:
       - rabbitmq-setup
 
@@ -177,8 +169,8 @@ services:
     networks:
       - bulba-net
 
-  # # middleware for outsystems
-  # # THIS WORKS COMMENTED TO SAVE COST
+  # middleware for outsystems
+  # THIS WORKS COMMENTED TO SAVE COST
   rabbitmq-middleware:
     build: ../backend/rabbitmq_middleware
     container_name: amqp-middleware
@@ -186,6 +178,7 @@ services:
       - bulba-net
     depends_on:
       - rabbitmq-setup
+
   #######################################
   # Redis Cache (For Bidding Microservice)
   #######################################

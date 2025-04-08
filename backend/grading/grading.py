@@ -1,6 +1,7 @@
 from flask import jsonify
 from supabase import create_client
 from dotenv import load_dotenv
+from datetime import datetime
 import json
 import sys, os
 import uuid  
@@ -37,13 +38,15 @@ def connectAMQP():
         print(f"  Unable to connect to RabbitMQ.\n     {exception=}\n")
         exit(1)
 
-# Creation function, comes from websocket/ui, takes in bkey create.grading EXACT
+# Main function, comes from websocket/ui
+# grade_card, takes in bkey create.grading EXACT
 def grade_card(channel, method, properties, body):
     result = json.loads(body)
     try:
-        print("\nReceived grading request:", result)
+        # print("\nReceived grading request:", result)
 
         # Extract required fields
+        cardName = result["cardName"]
         cardID = result["cardID"]
         address = result["address"]
         postalCode = result["postalCode"]
@@ -64,22 +67,24 @@ def grade_card(channel, method, properties, body):
             "status": "Created",
             "postalCode": postalCode, 
             "result": "", 
+            "deliveryID": "",
+            "cardName": cardName,
         }
 
         # Upload to Supabase storage
         response = supabase.table("grading").insert(data).execute()
         
-        if response.data:
-            print("Data from DB: " + json.dumps(response.data))
-        else:
-            print("error: No record found")
+        # if response.data:
+        #     print("Data from DB: " + json.dumps(response.data))
+        # else:
+        #     print("error: No record found")
         
-        # Send to External Grader
-        result = send_grading(data)
-        
-        # # Notify user
+        # Notify user
         # print("Publishing notification request to RabbitMQ...")
-        # send_notify("creation.notify", data)
+        helper_send_notify("Grading", response.data[0])
+        
+        # Send to Delivery
+        result = helper_send_delivery(data)
 
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -89,19 +94,21 @@ def grade_card(channel, method, properties, body):
 
         return jsonify({"code": 500, "message": "Internal error", "exception": ex_str}), 500
 
-# send_grading function send to external grader and inform user
-def send_grading(data):
+# Helper function
+# helper_send_delivery function send to deliver which calls external delivery
+def helper_send_delivery(data):
     try:
         data_json = json.dumps(data)
-        print(data_json)
+        # print(data_json)
+        
         # Connection to AMQP
         if connection is None or not amqp_lib.is_connection_open(connection):
             connectAMQP()
         
         # Publish to RabbitMQ
-        print("Publishing grading request to RabbitMQ...")
+        # print("Publishing grading request to RabbitMQ...")
         channel.basic_publish(
-            exchange=exchange_name, routing_key="create.externalGrading", body=data_json
+            exchange=exchange_name, routing_key="create.delivery", body=data_json
         )
         
     except Exception as e:
@@ -113,21 +120,21 @@ def send_grading(data):
             "message": "Internal error",
             "exception": ex_str
         }
-        
-# takes in bkey get.grading EXACT
+
+# Main function, comes from websocket/ui
+# grade_card, takes in bkey get.grading EXACT
 def get_db(channel, method, properties, body):
     result = json.loads(body)
-    print("\nReceived grading request:", result)
-    
     try:
-        print("\nReceived grading request:", result)
+        # print("\nReceived grading request:", result)
+        
         # Parse UUID from body
         userID = result["userID"]
         if not userID:
             raise ValueError("Missing 'userID' in request body.")
 
         # Query Supabase table
-        print(f"Querying Supabase for UserID: {userID}")
+        # print(f"Querying Supabase for UserID: {userID}")
         response = supabase.table("grading").select("*").eq("userID", userID).execute()
 
         if response.data:
@@ -136,7 +143,7 @@ def get_db(channel, method, properties, body):
             payload = json.dumps({"error": "No record found"})
 
         # Publish to RabbitMQ
-        print("Publishing data to RabbitMQ...")
+        # print("Publishing data to RabbitMQ...")
         channel.basic_publish(
             exchange=exchange_name,
             routing_key=".return",
@@ -150,12 +157,72 @@ def get_db(channel, method, properties, body):
             body=error_payload
         )
 
-# Update function, takes in bkey .update
+# Main function, comes from websocket/ui
+# grade_card, takes in bkey get.grading EXACT
+def send_to_ext_grading(channel, method, properties, body):
+    result = json.loads(body)
+    try:
+        # print("\nReceived grading request:", result)
+
+        # Upload to Supabase storage
+        response = supabase.table("grading").update({
+                "deliveryID": result["deliveryID"]
+                }).eq("gradingID", result["gradingID"]).execute()
+        
+        # if response.data:
+        #     print("Data from DB: " + json.dumps(response.data))
+        # else:
+        #     print("error: No record found")
+            
+        # Notify user
+        # print("Publishing notification request to RabbitMQ...")
+        helper_send_notify("Delivery", result)
+        
+        # Send to External Grader
+        reponse = helper_send_grading(result)
+
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        ex_str = f"{str(e)} at {exc_type}: {fname}: line {exc_tb.tb_lineno}"
+        print("Error:", ex_str)
+
+        return jsonify({"code": 500, "message": "Internal error", "exception": ex_str}), 500
+
+# Helper function
+# helper_send_grading function send to external grader and inform user
+def helper_send_grading(data):
+    try:
+        data_json = json.dumps(data)
+        # print(data_json)
+        
+        # Connection to AMQP
+        if connection is None or not amqp_lib.is_connection_open(connection):
+            connectAMQP()
+        
+        # Publish to RabbitMQ
+        # print("Publishing grading request to RabbitMQ...")
+        channel.basic_publish(
+            exchange=exchange_name, routing_key="create.externalGrading", body=data_json
+        )
+        
+    except Exception as e:
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        ex_str = f"{str(e)} at {exc_type}: {fname}: line {exc_tb.tb_lineno}"
+        return {
+            "code": 500,
+            "message": "Internal error",
+            "exception": ex_str
+        }
+
+# Main function, comes from external grading ms
+# update_grading, takes in bkey .update
 def update_grading(channel, method, propertites, body, routing_key):
     try:
         result = json.loads(body)
-        print(f"Grader message (JSON): {result}")
-        # result_json = json.dumps(result)
+        # print(f"Grader message (JSON): {result}")
+        
         if "status" in routing_key:
             response = supabase.table("grading").update({
                 "status": result["status"]
@@ -166,8 +233,8 @@ def update_grading(channel, method, propertites, body, routing_key):
                 "result": result["result"]
                 }).eq("gradingID", result["gradingID"]).execute()
         
-        # # Notify user
-        # send_notify("externalGrader.notify", result)
+        # Notify user
+        helper_send_notify("Grading", result)
         
     except Exception as e:
         error_payload = json.dumps({"error": str(e)})
@@ -177,30 +244,55 @@ def update_grading(channel, method, propertites, body, routing_key):
             body=error_payload
         )
 
-# Notify function, sends rkey .notify to notification ms
-def send_notify(rKey, data):
-    # {
-    #     "Service": "Grading",
-    #     "Text": "",
-    #     "Timestamp": "2025-04-05T16:30:00Z",
-    #     "Data": {
-    #         "UserID": "Jag-000",
-    #         "CardID": "67890",
-    #         "Status": "Completed",
-    #         "GradingID": "5564312",
-    #         "ShippingID": "98765",
-    #         "PickupDate": "",
-    #         "AuctionID": "",
-    #         "Price": "",
-    #         "PhoneNumber": "+6598895901"
-    #     }
-    # }
-    channel.basic_publish(
-        exchange=exchange_name, routing_key=rKey, body=data
-    )
 
+# Helper function
+# helper_send_notify, sends rkey .notify to notification ms
+def helper_send_notify(service, data):
+    try:
+        shippingID = ""
+    
+        if service == "Delivery":
+            shippingID = data["deliveryID"]
 
-# incoming from externalGrader/ Delivery APIdef callback(channel, method, properties, body):
+        result = {
+            "Service": service,
+            "Text": "",
+            "Timestamp": datetime.now().isoformat(),
+            "Data": {
+                "UserID": "",
+                "CardID": data["cardID"],
+                "Status": data["status"],
+                "GradingID": data["gradingID"],
+                "ShippingID": shippingID,
+                "AuctionID": "",
+                "Price": "",
+                "PhoneNumber": "+6598895901",
+                "CardName" : data["cardName"],
+                "RefundID" : ""
+            }
+        }
+        
+        # print("notification:")
+        # print(result)
+    
+        # Connection to AMQP
+        if connection is None or not amqp_lib.is_connection_open(connection):
+            connectAMQP()
+        
+        result_str = json.dumps(result)
+            
+        channel.basic_publish(
+            exchange=exchange_name, routing_key="smth.notify", body=result_str
+        )
+    except Exception as e:
+        error_payload = json.dumps({"error": str(e)})
+        channel.basic_publish(
+            exchange=exchange_name,
+            routing_key=".return",
+            body=error_payload
+        )
+
+# Route to Main functions base on rKey
 def callback(channel, method, properties, body):
     try:
         # Get the routing key
@@ -212,6 +304,8 @@ def callback(channel, method, properties, body):
             grade_card(channel, method, properties, body)
         elif routing_key == "get.grading":
             get_db(channel, method, properties, body)
+        elif routing_key == "delivery.update":
+            send_to_ext_grading(channel, method, properties, body)
         elif ".update" in routing_key:
             update_grading(channel, method, properties, body, routing_key)
 

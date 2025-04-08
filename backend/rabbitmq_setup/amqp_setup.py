@@ -115,6 +115,7 @@ try:
         routing_key="*.auction",
     )
     
+    # Create return queue
     create_queue(
         channel=channel,
         exchange_name=exchange_name,
