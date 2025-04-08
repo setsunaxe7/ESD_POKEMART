@@ -91,10 +91,10 @@ http://localhost:3000
 
 <p align="center"><strong>Storage Solutions</strong></p>
 <div align="center">
-	<code><a href="https://firebase.google.com/"><img width="50" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/firebase.png" alt="Firebase" title="Firebase"/></a></code>
-	<code><a href="https://supabase.com/"><img width="50" src="	https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/supabase.png" alt="Supabase" title="Supabase"/></a></code>
-		<code><a href="https://www.mongodb.com/"><img width="50" src="	https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/mongodb.png" alt="MongoDB" title="MongoDB"/></a></code>
-		<code><a href="https://redis.io/"><img width="50" src="	https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/redis.png" alt="Redis Cache" title="Redis Cache"/></a></code>
+	<code><a href="https://firebase.google.com/"><img width="50" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/supabase.png" alt="Firebase" title="Firebase"/></a></code>
+	<code><a href="https://supabase.com/"><img width="50" src="	https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/firebase.png" alt="Supabase" title="Supabase"/></a></code>
+	<code><a href="https://www.mongodb.com/"><img width="50" src="	https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/mongodb.png" alt="MongoDB" title="MongoDB"/></a></code>
+	<code><a href="https://redis.io/"><img width="50" src="	https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/redis.png" alt="Redis Cache" title="Redis Cache"/></a></code>
 </div>
 <p align="center">
 <br>
