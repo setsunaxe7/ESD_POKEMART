@@ -7,25 +7,35 @@ Created for IS213 Enterprise Solution Development, a core module for a degree in
 <br>
 <a href="https://github.com/setsunaxe7/ESD_POKEMART">GitHub Repo: ESD_POKEMART</a>
 
-## Installation
-Change directory to folder of choice (backend or frontend) before coding <br>
+## Getting Started
+### Prerequisites
+Docker ([Windows](https://docs.docker.com/desktop/setup/install/windows-install/) | [MacOS](https://docs.docker.com/desktop/setup/install/mac-install/)) <br>
+Node Package Manager (npm) ([Link](https://nodejs.org/en/download))
 
-Frontend:<br>
+### Setup
+Change directory to root folder before coding <br>
+
+#### Frontend:<br>
 1) Open a terminal and run the following commands:
-```
+```bash
 cd nuxt-frontend
 npm i
 npm run dev
 ```
+This starts the Nuxt development server on http://localhost:3000.
 
 <!-- Backend: [WIP] -->
-Backend:<br>
+#### Backend:<br>
 1) Open a terminal and run the following commands:
-```
+```bash
 cd kong
 run.bat
 ```
-Services might take a while to load.
+⏳ Note: Backend services may take a few moments to fully initialize.
+
+#### Accessing the Web App
+Once both the frontend and backend are running, visit:
+http://localhost:3000
 
 ## Technical Architecture Diagram
 [WIP]
@@ -84,10 +94,11 @@ Services might take a while to load.
 	<code><a href="https://firebase.google.com/"><img width="50" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/firebase.png" alt="Firebase" title="Firebase"/></a></code>
 	<code><a href="https://supabase.com/"><img width="50" src="	https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/supabase.png" alt="Supabase" title="Supabase"/></a></code>
 		<code><a href="https://www.mongodb.com/"><img width="50" src="	https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/mongodb.png" alt="MongoDB" title="MongoDB"/></a></code>
+		<code><a href="https://redis.io/"><img width="50" src="	https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/redis.png" alt="Redis Cache" title="Redis Cache"/></a></code>
 </div>
 <p align="center">
 <br>
-<i> Firebase | Supabase | MongoDB </i>
+<i> Firebase | Supabase | MongoDB | Redis Cache </i>
 </p>
 <br>
 
@@ -96,13 +107,13 @@ Services might take a while to load.
 	<code><a href="https://docs.stripe.com/api"><img width="75" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Stripe_Logo%2C_revised_2016.svg/1280px-Stripe_Logo%2C_revised_2016.svg.png" alt="Stripe API" title="Stripe API"/></a></code>
 	<code><a href="https://www.docker.com/"><img width="50" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/docker.png" alt="Docker" title="Docker"/></a></code>
 	<code><a href="https://pokemontcg.io/"><img width="50" src="https://archives.bulbagarden.net/media/upload/thumb/4/47/0094Gengar.png/900px-0094Gengar.png" alt="PokemonTCG API" title="PokemonTCG API"/></a></code>
+	<code><a href="https://www.twilio.com/en-us"><img width="100" src="https://upload.wikimedia.org/wikipedia/commons/c/c0/Twilio_logo.png" alt="Twilio" title="Twilio"/></a></code>
 </div>
 <p align="center">
 <br>
-<i> Stripe API | Docker | PokemonTCG API </i>
+<i> Stripe API | Docker | PokemonTCG API | Twilio </i>
 </p>
 <br>
-
 
 ## Contributors
 <b>Team 6</b>
