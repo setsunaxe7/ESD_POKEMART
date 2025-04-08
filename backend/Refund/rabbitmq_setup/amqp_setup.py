@@ -12,7 +12,7 @@ amqp_port = 5672
 amqp_user = "guest"     # Default RabbitMQ username
 amqp_password = "guest" # Default RabbitMQ password
 
-exchange_name = "grading_topic"
+exchange_name = "refund_topic"
 exchange_type = "topic"
 
 # Creates the exchange

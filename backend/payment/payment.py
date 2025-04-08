@@ -58,7 +58,7 @@ def create_payment_intent():
             "created_at": payment_intent.created,  # Timestamp when PaymentIntent was created
             "metadata": payment_intent.metadata    # Metadata from PaymentIntent (if any)
         }
-        
+
         result = bids_collection.insert_one(payment_data)  # Insert into MongoDB collection
         logging.info(f"Payment data stored in DB with ID: {result.inserted_id}")
 
@@ -68,7 +68,7 @@ def create_payment_intent():
         print(f"Error occurred: {str(e)}")  # Log unexpected errors
         logging.error(f"Error occurred: {str(e)}")
         return jsonify({"error": f"Server error: {str(e)}"}), 500
-    
+
 
 @app.route("/update_payment_status", methods=["PUT"])
 def update_payment_status():
@@ -134,11 +134,39 @@ def create_refund():
 
         if result.matched_count == 0:
             return jsonify({"error": "PaymentIntent not found"}), 404
-        
+
 
         return jsonify({"refund": refund}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
+# ...existing code...
+
+@app.route("/payments/<user_id>", methods=["GET"])
+def get_user_payments(user_id):
+    try:
+        # Validate user_id
+        if not user_id:
+            return jsonify({"error": "User ID is required"}), 400
+
+        # Query MongoDB for payments with the given user_id
+        payments = list(bids_collection.find({"user_id": user_id}, {"_id": 0}))
+
+        if not payments:
+            return jsonify({"message": "No payments found for this user", "payments": []}), 200
+
+        # Convert non-serializable objects to string (like ObjectId)
+        for payment in payments:
+            if 'created_at' in payment:
+                payment['created_at'] = str(payment['created_at'])
+
+        logging.info(f"Retrieved {len(payments)} payments for user {user_id}")
+
+        return jsonify({"payments": payments}), 200
+
+    except Exception as e:
+        logging.error(f"Error retrieving payments for user {user_id}: {str(e)}")
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5007)
