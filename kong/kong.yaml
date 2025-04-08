@@ -24,7 +24,7 @@ services:
           - /marketplace
 
   - name: payment-service
-    url: http://payment-service:5007
+    url: http://payment-service:5008
     routes:
       - name: payment-route
         paths:
