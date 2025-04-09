@@ -111,13 +111,13 @@ def check_and_publish():
 
             # Calculate the time window
             now = datetime.now()
-            time_window_start = now - timedelta(seconds=75)
+            time_window_start = now - timedelta(seconds=120)
             logging.warning(f"Time window start: {time_window_start}, Now: {now}")
 
             # Query Supabase for relevant entries
             query_result = (
                 supabase.table("marketplace")
-                .select("id, card_id, status, highest_bid, auction_end_date")
+                .select("id, card_id, status, highest_bid, auction_end_date, highest_bidder_id")
                 .eq("status", "closed")
                 .gte("auction_end_date", time_window_start.isoformat())
                 .lte("auction_end_date", now.isoformat())
