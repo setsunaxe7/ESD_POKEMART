@@ -19,9 +19,8 @@ npm run dev
 ```
 
 #### Backend:<br>
-1) Open a terminal and run the following commands:
+1) Open a terminal and run the following command:
 ```bash
-cd kong
 run.bat
 ```
 ⏳ Note: Backend services may take a few moments to fully initialize.
@@ -29,6 +28,12 @@ run.bat
 #### Accessing the Web App
 Once both the frontend and backend are running, visit:
 http://localhost:3000
+
+#### Shutdown services
+1) In the same terminal where docker is running run the following command:
+```bash
+docker compose down -v
+```
 
 ## Technical Architecture Diagram
 <img title="technical overiview diagram" alt="technical overview diagram" src="https://github.com/user-attachments/assets/ad237ffa-832a-4ff0-9b63-efa21e695f64">
