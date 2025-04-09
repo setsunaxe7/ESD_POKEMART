@@ -139,7 +139,7 @@ def check_and_publish():
                         "Status": row["status"],
                         "AuctionID": row["id"],
                         "Price": row["highest_bid"],
-                        "PhoneNumber": "+6598895901",
+                        "PhoneNumber": "+6581276017",
                     },
                 }
                 logging.debug(f"Publishing message: {message}")
