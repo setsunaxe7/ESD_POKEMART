@@ -34,7 +34,7 @@ services:
       - "8001:8001" # Admin API port.
       - "8002:8002" # Kong Manager GUI port.
     volumes:
-      - ./kong.yaml:/etc/kong/kong.yaml # Mount kong.yaml into container.
+      - ./kong/kong.yaml:/etc/kong/kong.yaml # Mount kong.yaml into container.
 
   #######################################
   # Flask Microservices (Bidding, Marketplace, Inventory)
@@ -43,13 +43,13 @@ services:
   # Bidding
   bidding-service:
     build:
-      context: ../backend/bidding/
+      context: ./backend/bidding/
     container_name: bidding-service
     restart: always
     networks:
       - bulba-net
     env_file:
-      - ../backend/bidding/.env  # Load environment variables from .env file
+      - ./backend/bidding/.env  # Load environment variables from .env file
     ports:
       - "5002:5002"
     depends_on:
@@ -59,26 +59,26 @@ services:
   # Inventory
   inventory-service:
     build:
-      context: ../backend/inventory/
+      context: ./backend/inventory/
     container_name: inventory-service
     restart: always
     networks:
       - bulba-net
     env_file:
-      - ../backend/inventory/.env  # Load environment variables from .env file
+      - ./backend/inventory/.env  # Load environment variables from .env file
     ports:
       - "5003:5003"
 
   # Marketplace
   marketplace-service:
     build:
-      context: ../backend/marketplace/
+      context: ./backend/marketplace/
     container_name: marketplace-service
     restart: always
     networks:
       - bulba-net
     env_file:
-      - ../backend/marketplace/.env  # Load environment variables from .env file
+      - ./backend/marketplace/.env  # Load environment variables from .env file
     ports:
       - "5004:5004"
     depends_on:
@@ -87,59 +87,59 @@ services:
   # Payment
   payment-service:
     build:
-      context: ../backend/payment/
+      context: ./backend/payment/
     container_name: payment-service
     restart: always
     networks:
       - bulba-net
     env_file:
-      - ../backend/payment/.env  # Load environment variables from .env file
+      - ./backend/payment/.env  # Load environment variables from .env file
     ports:
       - "5007:5007"
 
   # Grading
   grading-service:
     build:
-      context: ../backend/grading/
+      context: ./backend/grading/
     container_name: grading-service
     restart: always
     networks:
       - bulba-net
     env_file:
-      - ../backend/grading/.env  # Load environment variables from .env file
+      - ./backend/grading/.env  # Load environment variables from .env file
     depends_on:
       - rabbitmq-setup
 
   # External Grading
   external-grading-service:
     build:
-      context: ../backend/external_grading/
+      context: ./backend/external_grading/
     container_name: external-grading-service
     restart: always
     networks:
       - bulba-net
     env_file:
-      - ../backend/external_grading/.env  # Load environment variables from .env file
+      - ./backend/external_grading/.env  # Load environment variables from .env file
     depends_on:
       - rabbitmq-setup
 
   # Delivery
   delivery-service:
     build:
-      context: ../backend/delivery/
+      context: ./backend/delivery/
     container_name: delivery-service
     restart: always
     networks:
       - bulba-net
     env_file:
-      - ../backend/delivery/.env  # Load environment variables from .env file
+      - ./backend/delivery/.env  # Load environment variables from .env file
     depends_on:
       - rabbitmq-setup
 
   #Refund
   refund-service:
     build:
-      context: ../backend/refund/
+      context: ./backend/refund/
     container_name: refund-service
     restart: always
     networks:
@@ -152,7 +152,7 @@ services:
     #Card Verification
   verification-service:
     build:
-      context: ../backend/CardVerification/
+      context: ./backend/CardVerification/
     container_name: verification-service
     restart: always
     networks:
@@ -164,7 +164,7 @@ services:
   # RabbitMQ: The messaging broker   
   ####################################
   rabbitmq:
-    build: ../backend/rabbitmq
+    build: ./backend/rabbitmq
     container_name: rabbitmq
     hostname: rabbitmq
     restart: always
@@ -185,7 +185,7 @@ services:
 
   # init queue and exchange
   rabbitmq-setup:
-    build: ../backend/rabbitmq_setup
+    build: ./backend/rabbitmq_setup
     container_name: amqp-setup
     depends_on:
       rabbitmq:
@@ -195,7 +195,7 @@ services:
 
   # middleware for outsystems
   rabbitmq-middleware:
-    build: ../backend/rabbitmq_middleware
+    build: ./backend/rabbitmq_middleware
     container_name: amqp-middleware
     networks:
       - bulba-net
