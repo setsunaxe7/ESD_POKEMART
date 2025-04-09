@@ -266,7 +266,7 @@ def helper_send_notify(service, data):
                 "ShippingID": shippingID,
                 "AuctionID": "",
                 "Price": "",
-                "PhoneNumber": "+6598895901",
+                "PhoneNumber": "+6581276017",
                 "CardName" : data["cardName"],
                 "RefundID" : ""
             }
