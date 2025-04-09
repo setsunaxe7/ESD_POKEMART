@@ -1,10 +1,7 @@
 # Bulba-Trade
-[COMING SOON]<br>
 A Pokemon TCG Marketplace web application aiming to provide a pleasant trading and card grading experience for collectors. <br>
 Created for IS213 Enterprise Solution Development, a core module for a degree in Information Systems at Singapore Management University.
 
-<a>(Not Yet Available) Hosted Application URL</a>
-<br>
 <a href="https://github.com/setsunaxe7/ESD_POKEMART">GitHub Repo: ESD_POKEMART</a>
 
 ## Getting Started
@@ -24,7 +21,6 @@ npm run dev
 ```
 This starts the Nuxt development server on http://localhost:3000.
 
-<!-- Backend: [WIP] -->
 #### Backend:<br>
 1) Open a terminal and run the following commands:
 ```bash
@@ -133,5 +129,4 @@ http://localhost:3000
 	<td><a href="https://github.com/yfbochap">Leong Yu Feng</a></td>
 	<td><a href="https://github.com/yapjunyu">Yap Jun Yu</a></td>
 </tr>
-<!-- list team members here, include link to github profile, if comfy put pic otherwise just github -->
 
