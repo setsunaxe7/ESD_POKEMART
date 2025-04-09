@@ -34,8 +34,7 @@ Once both the frontend and backend are running, visit:
 http://localhost:3000
 
 ## Technical Architecture Diagram
-[WIP]
-<img title="technical overiview diagram" alt="technical overview diagram" src="">
+<img title="technical overiview diagram" alt="technical overview diagram" src="https://github.com/user-attachments/assets/ad237ffa-832a-4ff0-9b63-efa21e695f64">
 
 ## Frameworks & Databases Used
 <p align="center"><strong>UI/UX</strong></p>
@@ -115,9 +114,9 @@ http://localhost:3000
 <table border=0>
 <tr>
 	<td><img>To fill</td>
-	<td><img src="https://raw.githubusercontent.com/angzhaofeng/esd_images/refs/heads/main/IMG_6149.jpg?token=GHSAT0AAAAAAC6HJ7PD7RXCOXTQKUTCX7NMZ7WPGAQ" alt="Zhao Feng" width="120" height="120" style="display:block; margin:0 auto;"></td>
-	<td><img src="https://raw.githubusercontent.com/angzhaofeng/esd_images/refs/heads/main/bigbrainsquare.JPG?token=GHSAT0AAAAAAC6HJ7PCWSBLID4CBE6RQB6WZ7WPUAA" alt="Jagat" width="120" height="120" style="display:block; margin:0 auto;"></td>
-	<td><img src="https://raw.githubusercontent.com/angzhaofeng/esd_images/refs/heads/main/6318947549247029871.jpg?token=GHSAT0AAAAAAC6HJ7PDLS35Q4VWJ6C5ZQT6Z7WPTMA" alt="Jagat" width="120" height="120" style="display:block; margin:0 auto;"></td>
+	<td><img src="https://github.com/user-attachments/assets/5685d56c-aaa4-44a9-b6de-ce6509ca2133" alt="Zhao Feng" width="120" height="120" style="display:block; margin:0 auto;"></td>
+	<td><img src="https://github.com/user-attachments/assets/4d4ffda2-f1d1-4e59-8555-3349593da847" alt="Elise" width="120" height="120" style="display:block; margin:0 auto;"></td>
+	<td><img src="https://github.com/user-attachments/assets/6cef203f-e5ed-44b7-be94-62189880352f" alt="Jagat" width="120" height="120" style="display:block; margin:0 auto;"></td>
 	<td><img>To fill</td>
 	<td><img>To fill</td>
 </tr>
