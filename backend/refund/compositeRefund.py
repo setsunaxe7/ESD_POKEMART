@@ -11,14 +11,14 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
 # Upload directory
-UPLOAD_FOLDER = 'uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# UPLOAD_FOLDER = 'uploads'
+# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Config for other microservices
-PAYMENT_URL = "http://localhost:8000/payment/refund"
+PAYMENT_URL = "http://payment-service:5007/refund"
 NOTIFICATION_URL = "https://personal-gvra7qzz.outsystemscloud.com/Notification/rest/NotificationAPI/api/notification/receive"
-CARD_VERIFICATION_URL = "http://localhost:5010/verify"
+CARD_VERIFICATION_URL = "http://verification-service:5010/verify"
 
 # RabbitMQ config
 exchange_name = "grading_topic"
@@ -27,7 +27,7 @@ routing_key = "*.notify"
 # Set up RabbitMQ connection
 def publish_notification(message):
     try:
-        connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        connection = pika.BlockingConnection(pika.ConnectionParameters(host='rabbitmq', port=5672))
         channel = connection.channel()
         channel.exchange_declare(exchange=exchange_name, exchange_type='topic', durable=True)
 
@@ -43,33 +43,33 @@ def publish_notification(message):
         logging.error(f"Failed to publish to RabbitMQ: {e}")
 
 # Call OutSystems Notification API
-def send_external_notification(notification_data):
-    try:
-        response = requests.post(NOTIFICATION_URL, json={
-            "Service": notification_data["Service"],
-            "Text": "",
-            "Timestamp": notification_data["TimeStamp"],
-            "Data": {
-                "UserID": notification_data.get("UserID", ""),
-                "CardID": notification_data["CardID"],
-                "Status": notification_data["Status"],
-                "GradingID": "",
-                "ShippingID": "",
-                "PickupDate": "",
-                "AuctionID": "",
-                "Price": "",
-                "PhoneNumber": "+6598895901",
-                "requestId": "a0baa8cc-ee1b-4c45-9f75-8a7fa2c7d342"
-            }
-        })
+# def send_external_notification(notification_data):
+#     try:
+#         response = requests.post(NOTIFICATION_URL, json={
+#             "Service": notification_data["Service"],
+#             "Text": "",
+#             "Timestamp": notification_data["TimeStamp"],
+#             "Data": {
+#                 "UserID": notification_data.get("UserID", ""),
+#                 "CardID": notification_data["CardID"],
+#                 "Status": notification_data["Status"],
+#                 "GradingID": "",
+#                 "ShippingID": "",
+#                 "PickupDate": "",
+#                 "AuctionID": "",
+#                 "Price": "",
+#                 "PhoneNumber": "+6598895901",
+#                 "requestId": notification_data["requestId"]
+#             }
+#         })
 
-        if response.status_code == 200:
-            logging.info("Successfully sent notification to OutSystems.")
-        else:
-            logging.warning(f"OutSystems notification failed: {response.status_code} - {response.text}")
+#         if response.status_code == 200:
+#             logging.info("Successfully sent notification to OutSystems.")
+#         else:
+#             logging.warning(f"OutSystems notification failed: {response.status_code} - {response.text}")
 
-    except Exception as e:
-        logging.error(f"Error sending notification to OutSystems: {e}")
+#     except Exception as e:
+#         logging.error(f"Error sending notification to OutSystems: {e}")
 
 @app.route('/refund-process', methods=['POST'])
 def start_refund_process():
@@ -130,14 +130,26 @@ def update_inspection_result():
 
         notification = {
             "Service": "Refund",
-            "CardID": card_id,
-            "Status": status_msg,
+            "Text": '',
             "TimeStamp": datetime.now().isoformat(),
-            "UserID": user_id
+            "Data": {
+                "CardID": card_id,
+                "Status": status_msg,
+                "UserID": user_id,
+                "GradingID": "",
+                "ShippingID": "",
+                "AuctionID":"",
+                "Price": "",
+                "PhoneNumber": "+6598895901",
+                "CardName" : "",
+                "RefundID" : request_id
+
+            }
+
         }
 
         publish_notification(notification)
-        send_external_notification(notification)
+        # send_external_notification(notification)
 
         return jsonify({
             'message': 'Inspection result processed successfully.',
@@ -148,6 +160,7 @@ def update_inspection_result():
     except Exception as e:
         logging.error(f"Error in update_inspection_result: {e}")
         return jsonify({'error': 'Internal Server Error'}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5009)

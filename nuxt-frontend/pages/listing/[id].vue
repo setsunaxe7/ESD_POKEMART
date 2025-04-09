@@ -25,7 +25,7 @@
     const bidInfo = ref();
     const isLoading = ref(true);
     const error = ref<string | null>(null);
-    const bidAmount = ref<number | null>(null);
+    const bidAmount = ref<number | null>(0);
     const listingCard = ref<Card>();
     const highestBid = ref<number | null>(null);
     const formattedBids = ref();
@@ -33,6 +33,22 @@
     // User data variables
     const userId = ref<string | null>(null); // Store user ID
     const displayName = ref<string | null>(null); // Store display name
+
+    const toast = useToast();
+
+    function showSuccess() {
+        toast.add({
+            title: "Successful!",
+            description: "Your bid has been placed"
+        });
+    }
+
+    function showFailure() {
+        toast.add({
+            title: "Failed!",
+            description: "Your bid is invalid"
+        });
+    }
 
     // For bid history table
     const bidColumns = [
@@ -272,21 +288,17 @@
 
             console.log("Listing data updated successfully:", response2);
         } catch (error) {
+            showFailure();
             console.error("Error placing bid:", error);
+        } finally {
+            bidAmount.value = 0;
+            showSuccess();
         }
     }
 
     const isValidBid = computed(() => {
         // Bid must be higher than current highest bid and be a positive number
         return bidAmount.value && bidAmount.value > (highestBid.value || 0);
-    });
-
-    const bidError = computed(() => {
-        if (!bidAmount.value) return null;
-        if (bidAmount.value <= (highestBid.value || 0)) {
-            return `Your bid must be higher than the current bid of ${formattedHighestBid.value}`;
-        }
-        return null;
     });
 
     // Implement placeOrder
@@ -383,7 +395,6 @@
                                             type="number"
                                             placeholder="Enter bid amount"
                                             v-model="bidAmount"
-                                            :color="bidError ? 'error' : 'primary'"
                                             class="w-full" />
                                     </div>
                                     <div class="space-x-2">
@@ -427,9 +438,6 @@
                                         </UModal>
                                     </div>
                                 </div>
-                                <p v-if="bidError" class="text-red-500 text-sm mt-4">
-                                    {{ bidError }}
-                                </p>
                             </UCard>
 
                             <!-- Buy now button - Only for direct listings -->

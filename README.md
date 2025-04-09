@@ -1,10 +1,7 @@
 # Bulba-Trade
-[COMING SOON]<br>
 A Pokemon TCG Marketplace web application aiming to provide a pleasant trading and card grading experience for collectors. <br>
 Created for IS213 Enterprise Solution Development, a core module for a degree in Information Systems at Singapore Management University.
 
-<a>(Not Yet Available) Hosted Application URL</a>
-<br>
 <a href="https://github.com/setsunaxe7/ESD_POKEMART">GitHub Repo: ESD_POKEMART</a>
 
 ## Getting Started
@@ -24,7 +21,6 @@ npm run dev
 ```
 This starts the Nuxt development server on http://localhost:3000.
 
-<!-- Backend: [WIP] -->
 #### Backend:<br>
 1) Open a terminal and run the following commands:
 ```bash
@@ -38,8 +34,7 @@ Once both the frontend and backend are running, visit:
 http://localhost:3000
 
 ## Technical Architecture Diagram
-[WIP]
-<!-- <img width="" alt="architecture diagram" src=""> -->
+<img title="technical overiview diagram" alt="technical overview diagram" src="https://github.com/user-attachments/assets/ad237ffa-832a-4ff0-9b63-efa21e695f64">
 
 ## Frameworks & Databases Used
 <p align="center"><strong>UI/UX</strong></p>
@@ -91,14 +86,13 @@ http://localhost:3000
 
 <p align="center"><strong>Storage Solutions</strong></p>
 <div align="center">
-	<code><a href="https://firebase.google.com/"><img width="50" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/firebase.png" alt="Firebase" title="Firebase"/></a></code>
 	<code><a href="https://supabase.com/"><img width="50" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/supabase.png" alt="Supabase" title="Supabase"/></a></code>
 	<code><a href="https://www.mongodb.com/"><img width="50" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/mongodb.png" alt="MongoDB" title="MongoDB"/></a></code>
 	<code><a href="https://redis.io/"><img width="50" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/redis.png" alt="Redis Cache" title="Redis Cache"/></a></code>
 </div>
 <p align="center">
 <br>
-<i> Firebase | Supabase | MongoDB | Redis Cache </i>
+<i> Supabase | MongoDB | Redis Cache </i>
 </p>
 <br>
 
@@ -120,9 +114,9 @@ http://localhost:3000
 <table border=0>
 <tr>
 	<td><img>To fill</td>
-	<td><img>To fill</td>
-	<td><img>To fill</td>
-	<td><img>To fill</td>
+	<td><img src="https://github.com/user-attachments/assets/5685d56c-aaa4-44a9-b6de-ce6509ca2133" alt="Zhao Feng" width="120" height="120" style="display:block; margin:0 auto;"></td>
+	<td><img src="https://github.com/user-attachments/assets/4d4ffda2-f1d1-4e59-8555-3349593da847" alt="Elise" width="120" height="120" style="display:block; margin:0 auto;"></td>
+	<td><img src="https://github.com/user-attachments/assets/6cef203f-e5ed-44b7-be94-62189880352f" alt="Jagat" width="120" height="120" style="display:block; margin:0 auto;"></td>
 	<td><img>To fill</td>
 	<td><img>To fill</td>
 </tr>
@@ -134,5 +128,4 @@ http://localhost:3000
 	<td><a href="https://github.com/yfbochap">Leong Yu Feng</a></td>
 	<td><a href="https://github.com/yapjunyu">Yap Jun Yu</a></td>
 </tr>
-<!-- list team members here, include link to github profile, if comfy put pic otherwise just github -->
 

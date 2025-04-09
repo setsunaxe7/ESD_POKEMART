@@ -11,7 +11,7 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the port used by the inventory microservice
-EXPOSE 5008
+EXPOSE 5007
 
 # Command to run the inventory microservice
 CMD ["python", "payment.py"]

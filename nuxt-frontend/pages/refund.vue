@@ -7,6 +7,7 @@
     const payments = ref([]);
     const listings = ref<Listing[]>([]);
     const selectedTransaction = ref(null);
+    const selectedPaymentId = ref(null);
     const selectedReason = ref(null);
     const refundReason = ["Card Damaged", "Item not as described", "Others"];
     const elaboration = ref("");
@@ -19,6 +20,23 @@
     const handleFileChange = (event: any) => {
         imageFile.value = event.target.files[0];
     };
+
+    const toast = useToast();
+
+    function showToast() {
+        toast.add({
+            title: "Success!",
+            description: "Your refund request will be processed soon",
+        });
+    }
+
+    interface RequestData {
+        cardId: string;
+        transactionId: string;
+        userId: string;
+        refundReason: string;
+        details: string;
+    }
 
     // Get user payments data
     const getUserPayments = async () => {
@@ -102,6 +120,7 @@
                 try {
                     console.log("Fetching card data for:", newValue.listingData.card_id);
                     await fetchCard(newValue.listingData.card_id);
+                    selectedPaymentId.value = selectedTransaction.value.paymentId;
                     console.log("Card data fetched successfully:", card.value);
                 } catch (error) {
                     console.error("Error fetching card data:", error);
@@ -115,6 +134,36 @@
 
     const submitRequest = async () => {
         isSubmitting.value = true;
+        try {
+            const formData = new FormData();
+            if (imageFile.value) {
+                formData.append("image", imageFile.value);
+            }
+
+            // Append each field individually instead of as a JSON string
+            formData.append("cardId", selectedOrder.value?.listingData?.card_id);
+            formData.append("transactionId", selectedPaymentId.value);
+            formData.append("userId", user.value?.id);
+            formData.append("refundReason", selectedReason.value);
+            formData.append("details", elaboration.value);
+
+            const response = await axios.post(
+                "http://localhost:8000/refund/refund-process",
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                }
+            );
+
+            console.log("Request created successfully:", response.data);
+        } catch (err) {
+            console.log(err);
+        } finally {
+            isSubmitting.value = false;
+            showToast();
+        }
     };
 
     onMounted(async () => {
@@ -140,10 +189,23 @@
                 listings.value = listingsData || [];
                 console.log("Listings fetched:", listings.value.length);
 
-                transactionOptions.value = listings.value.map((listing) => ({
-                    label: `${listing.title} - $${listing.price}`,
-                    value: listing.id,
-                }));
+                transactionOptions.value = payments.value
+                    .filter((payment) => payment.listing_id)
+                    .map((payment) => {
+                        // Find the corresponding listing for this payment
+                        const listing = listings.value.find((l) => l.id === payment.listing_id);
+                        if (!listing) return null;
+
+                        return {
+                            label: `${listing.title} - $${listing.price}`,
+                            value: listing.id, // Keep listing ID as value for compatibility
+                            paymentId: payment.payment_intent_id, // Add payment ID to the option
+                            paymentData: payment, // Store the full payment data for reference
+                        };
+                    })
+                    .filter((option) => option !== null); // Remove null entries
+
+                console.log(transactionOptions);
 
                 // Format options for the select menu
             }
@@ -207,11 +269,12 @@
                                         type="file"
                                         @change="handleFileChange" />
                                 </div>
-                                <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 mt-4">
+                                <div
+                                    class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-100 mt-4">
                                     <div class="flex items-start space-x-3">
                                         <div>
                                             <div class="flex flex-row space-x-2">
-                                                <h4 class="font-bold text-sm text-gray-700 mb-1">
+                                                <h4 class="font-bold text-sm mb-1">
                                                     Important Information
                                                 </h4>
                                                 <UIcon
@@ -234,7 +297,7 @@
                                 <!-- Placeholder when no order is selected -->
                                 <UCard
                                     v-if="!selectedTransaction"
-                                    class="h-full flex flex-col items-center justify-center p-8 bg-gray-50 text-center">
+                                    class="h-full flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-gray-800 text-center">
                                     <UIcon
                                         name="i-lucide-package"
                                         class="text-gray-300 w-16 h-16 mb-4 mx-auto" />
@@ -316,9 +379,10 @@
                         size="xl"
                         :block="true"
                         class="w-1/4 m-auto"
-                        :disabled="!isFormValid"
+                        :disabled="!isFormValid || isSubmitting"
+                        :isLoading="isSubmitting"
                         @click="submitRequest()">
-                        Submit Request
+                        {{ isSubmitting ? "Processing..." : "Submit Request" }}
                     </UButton>
                 </div>
             </div>
