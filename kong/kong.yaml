@@ -24,18 +24,18 @@ services:
           - /marketplace
 
   - name: payment-service
-    url: http://payment-service:5008
+    url: http://payment-service:5007
     routes:
       - name: payment-route
         paths:
           - /payment
 
 plugins:
-  - name: proxy-cache
-    config:
-      strategy: memory
-      content_type:
-        - application/json
+  # - name: proxy-cache
+  #   config:
+  #     strategy: memory
+  #     content_type:
+  #       - application/json
   - name: cors
     config:
       origins:

@@ -34,6 +34,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+
 ##############################################################################################################
 
 # Connect to Redis
@@ -77,7 +78,6 @@ RABBITMQ_PORT = 5672
 RABBITMQ_EXCHANGE = "grading_topic"
 RABBITMQ_ROUTING_KEY = "*.notify"
 
-logging.warning(f"OK LOGGING DID RUN....")
 
 # Function to publish a message to RabbitMQ
 def publish_to_rabbitmq(message):
@@ -264,7 +264,13 @@ def get_listings():
         # Execute the query
         result = query.execute()
 
-        return jsonify(result.data), 200
+        response = jsonify(result.data)
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, proxy-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response, 200
+
+        #return jsonify(result.data), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

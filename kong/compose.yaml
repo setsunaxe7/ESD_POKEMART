@@ -95,7 +95,7 @@ services:
     env_file:
       - ../backend/payment/.env  # Load environment variables from .env file
     ports:
-      - "5008:5008"
+      - "5007:5007"
 
   # Grading
   grading-service:
@@ -170,7 +170,6 @@ services:
       - bulba-net
 
   # middleware for outsystems
-  # THIS WORKS COMMENTED TO SAVE COST
   rabbitmq-middleware:
     build: ../backend/rabbitmq_middleware
     container_name: amqp-middleware
