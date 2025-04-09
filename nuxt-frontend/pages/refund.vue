@@ -15,15 +15,14 @@
     const isLoading = ref(true);
     const { card, fetchCard, cardLoading } = useCards();
     const isSubmitting = ref(false);
-
+    const user = useSupabaseUser();
     const handleFileChange = (event: any) => {
         imageFile.value = event.target.files[0];
     };
 
     // Get user payments data
     const getUserPayments = async () => {
-        const userId = "d4abad07-1209-4170-b4d5-bd1d088cfde1";
-
+        const userId = user.value.id;
         try {
             const response = await axios.get(`http://localhost:8000/payment/payments/${userId}`);
 
