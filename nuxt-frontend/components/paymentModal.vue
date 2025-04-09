@@ -27,11 +27,11 @@ const { show, amount, currency, userId, listingId } = defineProps({
     },
     userId: {
         type: String,
-        required: true, 
+        required: true,
     },
     listingId: {
         type: String,
-        required: true, 
+        required: true,
     },
 });
 
@@ -92,7 +92,7 @@ const handlePayment = async () => {
                 headers: {
                     "Content-Type": "application/json", // Ensure JSON content type
                 },
-                body: { 
+                body: {
                     amount: validAmount,
                     currency: validCurrency,
                     userId,
@@ -239,5 +239,3 @@ button.btn-neutral {
     background-color: var(--ui-neutral);
 }
 </style>
-
-
