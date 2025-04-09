@@ -111,12 +111,12 @@ http://localhost:3000
 <b>Team 6</b>
 <table border=0>
 <tr>
-	<td><img src="https://github.com/user-attachments/assets/ac885931-e412-4a19-8e71-35591fe437f7" alt="Ashley" width="120" height="120" style="display:block; margin:0 auto;"></td>
-	<td><img src="https://github.com/user-attachments/assets/5685d56c-aaa4-44a9-b6de-ce6509ca2133" alt="Zhao Feng" width="120" height="120" style="display:block; margin:0 auto;"></td>
-	<td><img src="https://github.com/user-attachments/assets/4d4ffda2-f1d1-4e59-8555-3349593da847" alt="Elise" width="120" height="120" style="display:block; margin:0 auto;"></td>
-	<td><img src="https://github.com/user-attachments/assets/6cef203f-e5ed-44b7-be94-62189880352f" alt="Jagat" width="120" height="120" style="display:block; margin:0 auto;"></td>
+	<td><img src="https://github.com/user-attachments/assets/ac885931-e412-4a19-8e71-35591fe437f7" alt="Ashley" width="100" height="100" style="display:block; margin:0 auto;"></td>
+	<td><img src="https://github.com/user-attachments/assets/5685d56c-aaa4-44a9-b6de-ce6509ca2133" alt="Zhao Feng" width="100" height="100" style="display:block; margin:0 auto;"></td>
+	<td><img src="https://github.com/user-attachments/assets/4d4ffda2-f1d1-4e59-8555-3349593da847" alt="Elise" width="100" height="100" style="display:block; margin:0 auto;"></td>
+	<td><img src="https://github.com/user-attachments/assets/6cef203f-e5ed-44b7-be94-62189880352f" alt="Jagat" width="100" height="100" style="display:block; margin:0 auto;"></td>
 	<td><img src="" alt="Yu Feng" width="120" height="120" style="display:block; margin:0 auto;"></td>
-	<td><img src="https://github.com/user-attachments/assets/6e5574a7-0e6a-4e5b-849a-6a32a975f260" alt="Jun Yu" width="120" height="120" style="display:block; margin:0 auto;"></td>
+	<td><img src="https://github.com/user-attachments/assets/6e5574a7-0e6a-4e5b-849a-6a32a975f260" alt="Jun Yu" width="100" height="100" style="display:block; margin:0 auto;"></td>
 </tr>
 <tr>
 	<th><a href="https://github.com/AshleyCW-pers">Ashley Chiang</a></th>
