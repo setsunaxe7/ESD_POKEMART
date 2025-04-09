@@ -10,6 +10,10 @@
     const cardMounted = ref(false);
     const paymentResult = ref<string | null>(null);
     const isProcessing = ref(false);
+
+interface ListingStatus {
+    status: string;
+}
     const router = useRouter();
 
     // Props passed from parent component
@@ -80,20 +84,38 @@
         isProcessing.value = true;
         paymentResult.value = null;
 
-        try {
-            // Ensure amount is an integer
-            const validAmount = parseInt(amount); // Convert amount to an integer
-            const validCurrency = String(currency); // Ensure currency is a string
-            console.log(
-                "Valid Amount:",
-                validAmount,
-                "Currency:",
-                validCurrency,
-                "User ID:",
-                userId,
-                "Listing ID:",
-                listingId
-            ); // Log validated props
+    try {
+        // Ensure amount is an integer
+        const validAmount = parseInt(amount); // Convert amount to an integer
+        const validCurrency = String(currency); // Ensure currency is a string
+        console.log("Valid Amount:", validAmount, "Currency:", validCurrency, "User ID:", userId, "Listing ID:", listingId); // Log validated props
+
+        // Verify listing status from marketplace API
+        const marketplaceResponse = await $fetch<ListingStatus>(
+            `http://localhost:8000/marketplace/api/marketplace/listings/${listingId}`
+        );
+
+        const listingStatus = marketplaceResponse.status;
+
+        if (listingStatus !== "active") {
+            // Show error message if listing is not active
+            paymentResult.value = `Payment failed: Listing is ${listingStatus}. Payment cannot be processed.`;
+            console.error(`Listing ${listingId} is ${listingStatus}. Payment cannot proceed.`);
+            paymentStatus.value = "failed";
+            return;
+        }
+
+        // Update listing status to "pending"
+        await $fetch(`http://localhost:8000/marketplace/api/marketplace/listings/${listingId}`, {
+            method: "PUT",
+            body: {
+                status: "pending", // Update the status to 'pending'
+            },
+        });
+
+        console.log(`Listing ${listingId} status updated to pending.`);
+
+
 
             // Step 1: Call backend to create PaymentIntent
             const { clientSecret } = await $fetch<{ clientSecret: string }>(

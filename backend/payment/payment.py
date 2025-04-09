@@ -4,7 +4,8 @@ import os
 from flask_cors import CORS
 import logging
 from pymongo import MongoClient
-
+from queue import Queue
+from threading import Thread
 
 logging.basicConfig(level = logging.INFO)
 app = Flask(__name__)
@@ -37,6 +38,7 @@ def create_payment_intent():
         # Validate currency
         if not isinstance(currency, str) or len(currency) != 3:
             return jsonify({"error": "Invalid currency. Currency must be a valid ISO 4217 code (e.g., 'usd')."}), 400
+
 
         # Create a payment intent using Stripe's API
         payment_intent = stripe.PaymentIntent.create(
