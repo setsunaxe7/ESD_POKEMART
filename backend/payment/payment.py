@@ -38,6 +38,11 @@ def create_payment_intent():
         if not isinstance(currency, str) or len(currency) != 3:
             return jsonify({"error": "Invalid currency. Currency must be a valid ISO 4217 code (e.g., 'usd')."}), 400
 
+        # Step 1: Check if listing is active
+        listing = supabase.table('marketplace').select('*').eq('id', listing_id).execute().data
+        if not listing or listing[0].get("status") != "active":
+            return jsonify({"error": "Listing is no longer available for purchase"}), 400
+
         # Create a payment intent using Stripe's API
         payment_intent = stripe.PaymentIntent.create(
             amount=amount,
