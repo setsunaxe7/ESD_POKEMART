@@ -33,7 +33,7 @@ http://localhost:3000
 ## Technical Architecture Diagram
 <img title="technical overiview diagram" alt="technical overview diagram" src="https://github.com/user-attachments/assets/ad237ffa-832a-4ff0-9b63-efa21e695f64">
 
-## Frameworks & Databases Used
+## Teck Stack
 <p align="center"><strong>UI/UX</strong></p>
 <div align="center">
 	<code><a href="https://ui.nuxt.com/"><img width="50" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/nuxt_js.png" alt="Nuxt.js" title="Nuxt.js"/></a></code>
