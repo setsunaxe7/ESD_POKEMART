@@ -58,7 +58,7 @@ def publish_notification(message):
 #                 "PickupDate": "",
 #                 "AuctionID": "",
 #                 "Price": "",
-#                 "PhoneNumber": "+6598895901",
+#                 "PhoneNumber": "+6581276017",
 #                 "requestId": notification_data["requestId"]
 #             }
 #         })
@@ -140,7 +140,7 @@ def update_inspection_result():
                 "ShippingID": "",
                 "AuctionID":"",
                 "Price": "",
-                "PhoneNumber": "+6598895901",
+                "PhoneNumber": "+6581276017",
                 "CardName" : "",
                 "RefundID" : request_id
 
