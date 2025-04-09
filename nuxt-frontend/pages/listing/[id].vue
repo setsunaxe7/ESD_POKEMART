@@ -28,10 +28,69 @@
     const bidAmount = ref<number | null>(null);
     const listingCard = ref<Card>();
     const highestBid = ref<number | null>(null);
+    const formattedBids = ref();
 
     // User data variables
     const userId = ref<string | null>(null); // Store user ID
     const displayName = ref<string | null>(null); // Store display name
+
+    // For bid history table
+    const bidColumns = [
+        {
+            key: "amount",
+            label: "Bid Amount",
+        },
+        {
+            key: "bidder",
+            label: "Bidder",
+        },
+        {
+            key: "timestamp",
+            label: "Date",
+        },
+        {
+            key: "winning",
+            label: "Status",
+        },
+    ];
+
+    // Format bid data for table display
+    function formatBidInfoData(rawBidInfo) {
+        if (!rawBidInfo?.bids || !rawBidInfo.bids.length) {
+            console.log("No bids to format");
+            return [];
+        }
+
+        // Sort bids by timestamp in descending order (newest first)
+        return [...rawBidInfo.bids]
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+            .map((bid) => ({
+                amount: formatCurrency(bid.bidAmount), // Format currency here
+                bidder: `User ${bid.buyerId.substring(0, 8)}`,
+                timestamp: formatBidDate(bid.timestamp), // Format date here
+            }));
+    }
+
+    // Helper functions for formatting
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(amount);
+    }
+
+    function formatBidDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+        });
+    }
 
     let breadCrumb = ref<BreadcrumbItem[]>([
         {
@@ -61,12 +120,12 @@
             const cardResponse = await $fetch<Card>(
                 `http://localhost:8000/inventory/inventory/${listing.value.card_id}`
             );
+            listingCard.value = cardResponse;
             const bidResponse = await $fetch<any>(
                 `http://localhost:8000/bid/bids/${listing.value.id}`
             );
-            listingCard.value = cardResponse;
             bidInfo.value = bidResponse;
-            console.log(bidInfo);
+            formattedBids.value = formatBidInfoData(bidInfo.value);
             breadCrumb.value = [
                 {
                     label: "Home",
@@ -91,9 +150,14 @@
                 "ws://localhost:15674/ws",
                 "grading_topic",
                 "*.auction",
-                (message) => {
+                async (message) => {
                     if (message.listing_id === id) {
                         highestBid.value = message.highest_bid;
+                        const bidResponse = await $fetch<any>(
+                            `http://localhost:8000/bid/bids/${listing.value.id}`
+                        );
+                        bidInfo.value = bidResponse;
+                        formattedBids.value = formatBidInfoData(bidInfo.value);
                         console.log(`Highest bid updated to ${message.highest_bid}`);
                     }
                 }
@@ -212,6 +276,19 @@
         }
     }
 
+    const isValidBid = computed(() => {
+        // Bid must be higher than current highest bid and be a positive number
+        return bidAmount.value && bidAmount.value > (highestBid.value || 0);
+    });
+
+    const bidError = computed(() => {
+        if (!bidAmount.value) return null;
+        if (bidAmount.value <= (highestBid.value || 0)) {
+            return `Your bid must be higher than the current bid of ${formattedHighestBid.value}`;
+        }
+        return null;
+    });
+
     // Implement placeOrder
     function placeOrder() {
         console.log("Place order");
@@ -287,14 +364,14 @@
                                     </div>
                                     <div class="flex flex-col">
                                         <p class="text-gray-500 text-sm">Current Bid</p>
-                                        <p class="font-bold text-xl">
+                                        <p class="font-bold text-md">
                                             {{ formattedHighestBid }}
                                         </p>
                                     </div>
                                     <div class="flex flex-col">
                                         <p class="text-gray-500 text-sm">Total Bids</p>
                                         <p class="font-medium text-md">
-                                            {{ listing?.bid_count || 0 }}
+                                            {{ formattedBids.length }}
                                         </p>
                                     </div>
                                 </div>
@@ -306,15 +383,53 @@
                                             type="number"
                                             placeholder="Enter bid amount"
                                             v-model="bidAmount"
+                                            :color="bidError ? 'error' : 'primary'"
                                             class="w-full" />
                                     </div>
-                                    <UButton
-                                        size="lg"
-                                        @click="placeBid()"
-                                        class="w-full md:w-auto">
-                                        Place Bid
-                                    </UButton>
+                                    <div class="space-x-2">
+                                        <UButton
+                                            size="lg"
+                                            @click="placeBid()"
+                                            class="w-full md:w-auto"
+                                            :disabled="!isValidBid">
+                                            Place Bid
+                                        </UButton>
+                                        <UModal
+                                            title="Bid History"
+                                            :close="{
+                                                color: 'primary',
+                                                variant: 'outline',
+                                                class: 'rounded-full',
+                                            }">
+                                            <UButton
+                                                class="hover:underline cursor-pointer"
+                                                label="Past bids"
+                                                color="neutral"
+                                                size="lg"
+                                                variant="link" />
+
+                                            <template #body>
+                                                <div
+                                                    v-if="!formattedBids?.length"
+                                                    class="py-8 text-center">
+                                                    <UIcon
+                                                        name="i-lucide-history"
+                                                        class="mx-auto h-12 w-12 text-gray-300 mb-2" />
+                                                    <p class="text-gray-500">
+                                                        No bids have been placed yet
+                                                    </p>
+                                                </div>
+
+                                                <div v-else>
+                                                    <UTable :data="formattedBids" class="flex-1" />
+                                                </div>
+                                            </template>
+                                        </UModal>
+                                    </div>
                                 </div>
+                                <p v-if="bidError" class="text-red-500 text-sm mt-4">
+                                    {{ bidError }}
+                                </p>
                             </UCard>
 
                             <!-- Buy now button - Only for direct listings -->
