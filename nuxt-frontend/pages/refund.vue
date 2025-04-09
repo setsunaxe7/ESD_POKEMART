@@ -133,11 +133,13 @@
                 formData.append("image", imageFile.value);
             }
             const refundRequest: any = {
+                cardId: selectedOrder.value?.listingData?.card_id,
                 transactionId: selectedPaymentId.value,
                 userId: user.value?.id,
                 refundReason: selectedReason.value,
                 details: elaboration.value,
             };
+            console.log(refundRequest);
             formData.append("data", JSON.stringify(refundRequest));
             const response = await axios.post(
                 "http://localhost:8000/refund/refund-process",
@@ -372,10 +374,10 @@
                         size="xl"
                         :block="true"
                         class="w-1/4 m-auto"
-                        :disabled="!isFormValid"
+                        :disabled="!isFormValid || isSubmitting"
                         :isLoading="isSubmitting"
                         @click="submitRequest()">
-                        Submit Request
+                        {{ isSubmitting ? "Processing..." : "Submit Request" }}
                     </UButton>
                 </div>
             </div>
