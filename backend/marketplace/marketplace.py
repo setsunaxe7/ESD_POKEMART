@@ -386,15 +386,7 @@ def get_listings_batch():
         if not listing_ids:
             return jsonify([]), 200
 
-        # Build the query with OR conditions
-        query = supabase.table('marketplace').select('*')
-
-        # For the first ID we start the filter chain
-        query = query.eq('id', listing_ids[0])
-
-        # For all other IDs we add OR conditions
-        for listing_id in listing_ids[1:]:
-            query = query.or_(f'id.eq.{listing_id}')
+        query = supabase.table('marketplace').select('*').in_('id', listing_ids)
 
         # Execute the query
         result = query.execute()
@@ -410,5 +402,3 @@ def get_listings_batch():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5004, debug=True)
-
-
