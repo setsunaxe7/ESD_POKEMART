@@ -101,6 +101,7 @@ interface ListingStatus {
             // Show error message if listing is not active
             paymentResult.value = `Payment failed: Listing is ${listingStatus}. Payment cannot be processed.`;
             console.error(`Listing ${listingId} is ${listingStatus}. Payment cannot proceed.`);
+            paymentStatus.value = "failed";
             return;
         }
 
