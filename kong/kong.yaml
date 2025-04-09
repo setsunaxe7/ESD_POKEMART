@@ -29,6 +29,21 @@ services:
       - name: payment-route
         paths:
           - /payment
+  
+  - name: refund-service
+    url: http://refund-service:5009
+    routes:
+      - name: refund-route
+        paths:
+          - /refund
+    
+  - name: verification-service
+    url: http://verification-service:5010
+    routes:
+      - name: verification-route
+        paths:
+          - /CardVerification
+
 
 plugins:
   # - name: proxy-cache

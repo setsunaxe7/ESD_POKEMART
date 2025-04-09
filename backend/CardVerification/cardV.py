@@ -99,7 +99,7 @@ def update_inspection_result():
         }).eq("id", request_id).execute()
 
         # Forward to Refund Service
-        refund_service_url = 'http://localhost:5009/update-inspection-result'
+        refund_service_url = 'http://localhost:8000/refund/update-inspection-result'
         payload = {
             'requestId': request_id,
             'inspectionResult': inspection_result,
