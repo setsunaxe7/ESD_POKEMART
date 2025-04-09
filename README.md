@@ -2,8 +2,6 @@
 A Pokemon TCG Marketplace web application aiming to provide a pleasant trading and card grading experience for collectors. <br>
 Created for IS213 Enterprise Solution Development, a core module for a degree in Information Systems at Singapore Management University.
 
-<a href="https://github.com/setsunaxe7/ESD_POKEMART">GitHub Repo: ESD_POKEMART</a>
-
 ## Getting Started
 ### Prerequisites
 Docker ([Windows](https://docs.docker.com/desktop/setup/install/windows-install/) | [MacOS](https://docs.docker.com/desktop/setup/install/mac-install/)) <br>
