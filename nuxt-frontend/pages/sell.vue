@@ -66,13 +66,21 @@
         },
     ];
 
+    const toast = useToast();
+    function showToast() {
+        toast.add({
+            title: "Success!",
+            description: "Your listing has been created",
+        });
+    }
+
     const listingType = [
         { label: "Fixed price", value: "direct" },
         { label: "Auction", value: "auction" },
     ];
 
     // Fetch cards when component mounts
-    onMounted( async () => {
+    onMounted(async () => {
         await fetchCards();
         // selectedCard.value = cardOptions.value[0];
     });
@@ -98,7 +106,7 @@
         if (!cards.value) return [];
 
         return cards.value.map((card) => ({
-            label: card.name + ' [' + card.rarity + ']',
+            label: card.name + " [" + card.rarity + "]",
             value: card.id,
             card: card,
         }));
@@ -192,6 +200,7 @@
             submissionError.value = error.response?.data?.error || "Failed to create listing";
         } finally {
             isSubmitting.value = false;
+            showToast();
         }
     };
 </script>
