@@ -202,7 +202,8 @@
                 title="Sell Your Cards"
                 description="List your Pokémon cards for sale in the marketplace"
                 :ui="{ container: 'lg:py-24' }" />
-            <div class="flex flex-col space-y-8 mb-8">
+            <Loading v-if="isLoading"></Loading>
+            <div v-else class="flex flex-col space-y-8 mb-8">
                 <UCard class="p-4">
                     <div class="flex flex-col gap-8">
                         <div class="flex flex-col gap-2">

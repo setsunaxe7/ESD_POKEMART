@@ -207,7 +207,10 @@
         // Fetch card from our database
         await fetchCard(id);
 
-        await fetchListings({ card_id: String(card.value?.id) });
+        await fetchListings({
+            card_id: String(card.value?.id),
+            status: "active",
+        });
 
         if (card.value?.card_id) {
             await fetchPokemonTcgCard(card.value.card_id);

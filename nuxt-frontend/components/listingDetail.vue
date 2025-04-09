@@ -106,7 +106,7 @@
                 </div>
 
                 <!-- Details Grid (Middle) -->
-                <!-- <div class="grid grid-cols-2 gap-4 mb-auto">
+                <div class="grid grid-cols-2 gap-4 mb-2">
                     <div>
                         <p class="text-xs text-gray-500">Card Grade</p>
                         <p class="font-medium text-sm">
@@ -114,10 +114,10 @@
                         </p>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-500">Listed On</p>
-                        <p class="font-medium text-sm">{{ formatDate(listing.created_at) }}</p>
+                        <p class="text-xs text-gray-500">Seller</p>
+                        <p class="font-medium text-sm">{{ listing.seller_name }}</p>
                     </div>
-                </div> -->
+                </div>
 
                 <!-- Bottom Row (Price left, Button right) -->
                 <div class="flex items-center justify-between">

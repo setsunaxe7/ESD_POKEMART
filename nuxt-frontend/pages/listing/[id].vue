@@ -5,10 +5,6 @@
     import type { Card } from "~/types/card";
     import WebSocketService from "../../services/websocketService.js";
     import PaymentModal from "~/components/paymentModal.vue";
-    import { SupabaseClient } from '@supabase/supabase-js';
-
-
-
 
     interface BidUpdateMessage {
         listing_id: string;
@@ -157,24 +153,23 @@
         try {
             const { data, error } = await supabase.auth.getUser(); // Get user data from Supabase
             if (error) {
-                console.error('Error fetching user data:', error);
+                console.error("Error fetching user data:", error);
                 return;
             }
             if (data && data.user) {
-                console.log('User ID:', data.user.id); // Unique identifier for the user
-                console.log('Display Name:', data.user.user_metadata?.display_name || 'N/A'); // Display name
+                console.log("User ID:", data.user.id); // Unique identifier for the user
+                console.log("Display Name:", data.user.user_metadata?.display_name || "N/A"); // Display name
 
                 // Store user data into reactive variables
                 userId.value = data.user.id;
-                displayName.value = data.user.user_metadata?.display_name || 'N/A';
+                displayName.value = data.user.user_metadata?.display_name || "N/A";
             } else {
-                console.log('No logged-in user found.');
+                console.log("No logged-in user found.");
             }
         } catch (error) {
-            console.error('Error fetching user data:', error);
+            console.error("Error fetching user data:", error);
         }
     }
-
 
     // Implement placeBid
     async function placeBid() {
@@ -198,15 +193,18 @@
             console.log("Bid placed successfully:", response);
             const updatedBidCount = (listing.value?.bid_count || 0) + 1;
 
-            const response2 = await $fetch(`http://localhost:8000/marketplace/api/marketplace/listings/${id}`, {
-                method: 'PUT',
-                body: {
-                    id: id, // ID of the listing
-                    highest_bid: bidAmount.value, // User's bid amount
-                    highest_bidder_id: userId.value, // Replace with actual user ID (if available)
-                    bid_count: updatedBidCount,
-                },
-            });
+            const response2 = await $fetch(
+                `http://localhost:8000/marketplace/api/marketplace/listings/${id}`,
+                {
+                    method: "PUT",
+                    body: {
+                        id: id, // ID of the listing
+                        highest_bid: bidAmount.value, // User's bid amount
+                        highest_bidder_id: userId.value, // Replace with actual user ID (if available)
+                        bid_count: updatedBidCount,
+                    },
+                }
+            );
 
             console.log("Listing data updated successfully:", response2);
         } catch (error) {
@@ -228,89 +226,127 @@
             <!-- Loading state -->
             <UBreadcrumb :items="breadCrumb" />
             <Loading class="mt-24" v-if="isLoading"></Loading>
-            <div v-else class="grid grid-cols-7 gap-16">
-                <div
-                    class="col-span-3 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                    <img
-                        :src="listing?.image_url"
-                        :alt="listing?.title"
-                        class="max-h-full max-w-full object-contain p-4" />
-                </div>
-                <div class="col-span-4 space-y-4">
-                    <h1 class="font-bold text-4xl">{{ listing?.title }}</h1>
-                    <div v-if="listing?.description" class="flex flex-col">
-                        <p class="text-gray-500 text-sm">Description</p>
-                        <p class="font-medium text-md">{{ listing.description }}</p>
-                    </div>
-                    <USeparator class="my-4"></USeparator>
-                    <h1 class="font-bold text-xl">Listing Details</h1>
-                    <div class="grid grid-cols-2 grid-rows-2 gap-4">
-                        <div class="flex flex-col col-span-1 row-span-1">
-                            <p class="text-gray-500 text-sm">Card Name</p>
-                            <p class="font-medium text-md">{{ listingCard?.name }}</p>
-                        </div>
-                        <div class="flex flex-col col-span-1 row-span-1">
-                            <p class="text-gray-500 text-sm">Card Rarity</p>
-                            <p class="font-medium text-md">{{ listingCard?.rarity }}</p>
-                        </div>
-                        <div class="flex flex-col col-span-1 row-span-1">
-                            <p class="text-gray-500 text-sm">Card Grade</p>
-                            <p class="font-medium text-md">{{ listing?.grade }}</p>
-                        </div>
-                        <div class="flex flex-col col-span-1 row-span-1">
-                            <p class="text-gray-500 text-sm">Listing Type</p>
-                            <p class="font-medium capitalize text-md">{{ listing?.type }}</p>
+            <div v-else>
+                <div class="grid grid-cols-7 gap-16">
+                    <!-- Left column - Image -->
+                    <div class="col-span-4">
+                        <div
+                            class="bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center overflow-hidden h-full">
+                            <img
+                                :src="listing?.image_url"
+                                :alt="listing?.title"
+                                class="max-h-full max-w-full object-contain p-4" />
                         </div>
                     </div>
-                    <div v-if="isAuction" class="grid grid-cols-2 grid-rows-2 gap-4">
-                        <div class="flex flex-col col-span-1 row-span-1">
-                            <p class="text-gray-500 text-sm">Current Bid</p>
-                            <p class="font-medium capitalize">
-                                {{
-                                    listing?.type == "auction"
-                                        ? formattedHighestBid
-                                        : formattedPrice
-                                }}
-                            </p>
-                        </div>
-                        <div class="flex flex-col col-span-1 row-span-1">
-                            <p class="text-gray-500 text-sm">Auction Ends In</p>
-                            <p class="font-medium capitalize">{{ timeRemaining }}</p>
-                        </div>
-                        <div class="flex flex-col col-span-1 row-span-1">
-                            <p class="text-gray-500 text-sm mb-2">Place Bid</p>
-                            <div class="w-full">
-                                <UInput class="w-3/4" type="number" v-model="bidAmount"></UInput>
+
+                    <!-- Right column - Listing details with bid/buy below -->
+                    <div class="col-span-3 space-y-6">
+                        <!-- Listing details -->
+                        <div class="space-y-4 p-4">
+                            <h1 class="font-bold text-4xl">{{ listing?.title }}</h1>
+                            <div v-if="listing?.description" class="flex flex-col">
+                                <p class="text-gray-500 text-sm">Description</p>
+                                <p class="font-medium text-md">{{ listing.description }}</p>
+                            </div>
+                            <USeparator class="my-4"></USeparator>
+                            <h1 class="font-bold text-xl">Listing Details</h1>
+                            <div class="grid grid-cols-2 grid-rows-2 gap-4 gap-x-12">
+                                <div class="flex flex-col col-span-1 row-span-1">
+                                    <p class="text-gray-500 text-sm">Card Name</p>
+                                    <p class="font-medium text-md">{{ listingCard?.name }}</p>
+                                </div>
+                                <div class="flex flex-col col-span-1 row-span-1">
+                                    <p class="text-gray-500 text-sm">Card Rarity</p>
+                                    <p class="font-medium text-md">{{ listingCard?.rarity }}</p>
+                                </div>
+                                <div class="flex flex-col col-span-1 row-span-1">
+                                    <p class="text-gray-500 text-sm">Card Grade</p>
+                                    <p class="font-medium text-md">{{ listing?.grade }}</p>
+                                </div>
+                                <div class="flex flex-col col-span-1 row-span-1">
+                                    <p class="text-gray-500 text-sm">Seller Name</p>
+                                    <p class="font-medium capitalize text-md">
+                                        {{ listing?.seller_name }}
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                        <div class="flex flex-col col-span-1 row-span-1 self-end">
-                            <UButton size="lg" @click="placeBid()" :block="true">Place bid</UButton>
+
+                        <!-- Purchase/Bid Card - Same width as details -->
+                        <div class="pt-4">
+                            <!-- Bid form - Only for auctions -->
+                            <UCard v-if="isAuction">
+                                <div class="grid grid-cols-2 gap-4 gap-x-12 mb-6">
+                                    <div class="flex flex-col">
+                                        <p class="text-gray-500 text-sm">Starting Price</p>
+                                        <p class="font-medium text-md">{{ formattedPrice }}</p>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <p class="text-gray-500 text-sm">Auction Ends In</p>
+                                        <p class="font-medium text-md">{{ timeRemaining }}</p>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <p class="text-gray-500 text-sm">Current Bid</p>
+                                        <p class="font-bold text-xl">
+                                            {{ formattedHighestBid }}
+                                        </p>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <p class="text-gray-500 text-sm">Total Bids</p>
+                                        <p class="font-medium text-md">
+                                            {{ listing?.bid_count || 0 }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col md:flex-row items-end gap-8">
+                                    <div class="w-1/2">
+                                        <p class="text-gray-500 text-sm mb-2">Bid Amount</p>
+                                        <UInput
+                                            type="number"
+                                            placeholder="Enter bid amount"
+                                            v-model="bidAmount"
+                                            class="w-full" />
+                                    </div>
+                                    <UButton
+                                        size="lg"
+                                        @click="placeBid()"
+                                        class="w-full md:w-auto">
+                                        Place Bid
+                                    </UButton>
+                                </div>
+                            </UCard>
+
+                            <!-- Buy now button - Only for direct listings -->
+                            <UCard v-else>
+                                <div
+                                    class="flex flex-col md:flex-row items-center justify-between gap-4">
+                                    <div>
+                                        <p class="text-gray-500 text-sm">Listing Price</p>
+                                        <p class="font-bold text-xl">{{ formattedPrice }}</p>
+                                    </div>
+                                    <UButton
+                                        size="lg"
+                                        @click="placeOrder()"
+                                        color="primary"
+                                        class="w-full md:w-auto">
+                                        Buy Now
+                                    </UButton>
+                                </div>
+                            </UCard>
                         </div>
                     </div>
-                    <div v-else class="grid grid-cols-2 grid-rows-1">
-                        <div class="flex flex-col col-span-1">
-                            <p class="text-gray-500 text-sm">Listing Price</p>
-                            <p class="font-medium capitalize">{{ formattedPrice }}</p>
-                        </div>
-                        <div class="flex flex-col col-span-1 self-end">
-                            <UButton size="lg" @click="placeOrder()" :block="true">
-                                Place Order
-                            </UButton>
-                        </div>
-                    </div>
-
-                    <!-- Payment Modal -->
-                    <PaymentModal
-                        :show="showPaymentModal"
-                        :amount="paymentAmount * 100"
-                        currency="USD"
-                        :user-id="userId || ''"
-                        :listing-id="id"
-                        @close="showPaymentModal = false"
-                    />
-
                 </div>
             </div>
+
+            <!-- Payment Modal -->
+            <PaymentModal
+                :show="showPaymentModal"
+                :amount="paymentAmount * 100"
+                currency="USD"
+                :user-id="userId || ''"
+                :listing-id="id"
+                @close="showPaymentModal = false" />
         </UContainer>
     </UMain>
 </template>

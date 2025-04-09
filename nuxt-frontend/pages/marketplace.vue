@@ -55,7 +55,7 @@
                 };
                 console.log(`Updated highest bid for listing ${listing_id}: ${highest_bid}`);
               }
-                
+
                 const route = useRoute();
                 if (route.query.page) {
                     const pageNum = parseInt(route.query.page as string);
@@ -338,7 +338,7 @@
                     </div>
                     <USeparator class="my-4"></USeparator>
                     <!-- Listings Grid -->
-                    <div class="h-full" v-if="filteredListings.length === 0">
+                    <div v-if="filteredListings.length === 0">
                         <UCard
                             class="h-full flex flex-col items-center justify-center text-center p-8">
                             <UIcon
