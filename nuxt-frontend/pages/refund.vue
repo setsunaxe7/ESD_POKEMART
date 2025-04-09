@@ -7,6 +7,7 @@
     const payments = ref([]);
     const listings = ref<Listing[]>([]);
     const selectedTransaction = ref(null);
+    const selectedPaymentId = ref(null);
     const selectedReason = ref(null);
     const refundReason = ["Card Damaged", "Item not as described", "Others"];
     const elaboration = ref("");
@@ -19,6 +20,15 @@
     const handleFileChange = (event: any) => {
         imageFile.value = event.target.files[0];
     };
+
+    const toast = useToast();
+
+    function showToast() {
+        toast.add({
+            title: "Success!",
+            description: "Your refund request will be processed soon",
+        });
+    }
 
     // Get user payments data
     const getUserPayments = async () => {
@@ -102,6 +112,7 @@
                 try {
                     console.log("Fetching card data for:", newValue.listingData.card_id);
                     await fetchCard(newValue.listingData.card_id);
+                    selectedPaymentId.value = selectedTransaction.value.paymentId;
                     console.log("Card data fetched successfully:", card.value);
                 } catch (error) {
                     console.error("Error fetching card data:", error);
@@ -115,6 +126,37 @@
 
     const submitRequest = async () => {
         isSubmitting.value = true;
+        try {
+            console.log(selectedPaymentId.value);
+            const formData = new FormData();
+            if (imageFile.value) {
+                formData.append("image", imageFile.value);
+            }
+            const refundRequest: any = {
+                transactionId: selectedPaymentId.value,
+                userId: user.value?.id,
+                refundReason: selectedReason.value,
+                details: elaboration.value,
+            };
+            formData.append("data", JSON.stringify(refundRequest));
+            const response = await axios.post(
+                "http://localhost:8000/refund/refund-process",
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                }
+            );
+
+            // Handle success - redirect or show success message
+            console.log("Request created successfully:", response.data);
+        } catch (err) {
+            console.log(err);
+        } finally {
+            isSubmitting.value = false;
+            showToast();
+        }
     };
 
     onMounted(async () => {
@@ -140,10 +182,23 @@
                 listings.value = listingsData || [];
                 console.log("Listings fetched:", listings.value.length);
 
-                transactionOptions.value = listings.value.map((listing) => ({
-                    label: `${listing.title} - $${listing.price}`,
-                    value: listing.id,
-                }));
+                transactionOptions.value = payments.value
+                    .filter((payment) => payment.listing_id)
+                    .map((payment) => {
+                        // Find the corresponding listing for this payment
+                        const listing = listings.value.find((l) => l.id === payment.listing_id);
+                        if (!listing) return null;
+
+                        return {
+                            label: `${listing.title} - $${listing.price}`,
+                            value: listing.id, // Keep listing ID as value for compatibility
+                            paymentId: payment.payment_intent_id, // Add payment ID to the option
+                            paymentData: payment, // Store the full payment data for reference
+                        };
+                    })
+                    .filter((option) => option !== null); // Remove null entries
+
+                console.log(transactionOptions);
 
                 // Format options for the select menu
             }
@@ -207,7 +262,8 @@
                                         type="file"
                                         @change="handleFileChange" />
                                 </div>
-                                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-100 mt-4">
+                                <div
+                                    class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-100 mt-4">
                                     <div class="flex items-start space-x-3">
                                         <div>
                                             <div class="flex flex-row space-x-2">
@@ -317,6 +373,7 @@
                         :block="true"
                         class="w-1/4 m-auto"
                         :disabled="!isFormValid"
+                        :isLoading="isSubmitting"
                         @click="submitRequest()">
                         Submit Request
                     </UButton>
