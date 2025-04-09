@@ -16,9 +16,9 @@ logging.basicConfig(level=logging.DEBUG)
 # app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Config for other microservices
-PAYMENT_URL = "http://payment-service:5007/payment/refund"
+PAYMENT_URL = "http://payment-service:5007/refund"
 NOTIFICATION_URL = "https://personal-gvra7qzz.outsystemscloud.com/Notification/rest/NotificationAPI/api/notification/receive"
-CARD_VERIFICATION_URL = "http://verification-service:5010/CardVerification/verify"
+CARD_VERIFICATION_URL = "http://verification-service:5010/verify"
 
 # RabbitMQ config
 exchange_name = "grading_topic"
@@ -112,7 +112,7 @@ def update_inspection_result():
             logging.info("Initiating refund process...")
 
             refund_payload = {
-                'payment_intent_id': 'pi_3RBw4a2KPPVAucgy1G3KZmOI'
+                'payment_intent_id': transaction_id
             }
 
             payment_response = requests.post(PAYMENT_URL, json=refund_payload)
