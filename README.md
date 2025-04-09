@@ -119,11 +119,11 @@ http://localhost:3000
 	<td><img>To fill</td>
 </tr>
 <tr>
-	<td><a href="https://github.com/AshleyCW-pers">Ashley Chiang</a></td>
-	<td><a href="https://github.com/angzhaofeng">Ang Zhao Feng</a></td>
-	<td><a href="https://github.com/setsunaxe7">Elise Teo</a></td>
-	<td><a href="https://github.com/moejag">Jagat Mok</a></td>
-	<td><a href="https://github.com/yfbochap">Leong Yu Feng</a></td>
-	<td><a href="https://github.com/yapjunyu">Yap Jun Yu</a></td>
+	<td style="text-align: center; vertical-align: middle;"><a href="https://github.com/AshleyCW-pers">Ashley Chiang</a></td>
+	<td style="text-align: center; vertical-align: middle;"><a href="https://github.com/angzhaofeng">Ang Zhao Feng</a></td>
+	<td style="text-align: center; vertical-align: middle;"><a href="https://github.com/setsunaxe7">Elise Teo</a></td>
+	<td style="text-align: center; vertical-align: middle;"><a href="https://github.com/moejag">Jagat Mok</a></td>
+	<td style="text-align: center; vertical-align: middle;"><a href="https://github.com/yfbochap">Leong Yu Feng</a></td>
+	<td style="text-align: center; vertical-align: middle;"><a href="https://github.com/yapjunyu">Yap Jun Yu</a></td>
 </tr>
 
