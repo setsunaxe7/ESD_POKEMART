@@ -30,6 +30,14 @@
         });
     }
 
+    interface RequestData {
+        cardId: string;
+        transactionId: string;
+        userId: string;
+        refundReason: string;
+        details: string;
+    }
+
     // Get user payments data
     const getUserPayments = async () => {
         const userId = user.value.id;
@@ -127,20 +135,18 @@
     const submitRequest = async () => {
         isSubmitting.value = true;
         try {
-            console.log(selectedPaymentId.value);
             const formData = new FormData();
             if (imageFile.value) {
                 formData.append("image", imageFile.value);
             }
-            const refundRequest: any = {
-                cardId: selectedOrder.value?.listingData?.card_id,
-                transactionId: selectedPaymentId.value,
-                userId: user.value?.id,
-                refundReason: selectedReason.value,
-                details: elaboration.value,
-            };
-            console.log(refundRequest);
-            formData.append("data", JSON.stringify(refundRequest));
+
+            // Append each field individually instead of as a JSON string
+            formData.append("cardId", selectedOrder.value?.listingData?.card_id);
+            formData.append("transactionId", selectedPaymentId.value);
+            formData.append("userId", user.value?.id);
+            formData.append("refundReason", selectedReason.value);
+            formData.append("details", elaboration.value);
+
             const response = await axios.post(
                 "http://localhost:8000/refund/refund-process",
                 formData,
@@ -151,7 +157,6 @@
                 }
             );
 
-            // Handle success - redirect or show success message
             console.log("Request created successfully:", response.data);
         } catch (err) {
             console.log(err);
