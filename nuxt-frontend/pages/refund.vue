@@ -207,11 +207,11 @@
                                         type="file"
                                         @change="handleFileChange" />
                                 </div>
-                                <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 mt-4">
+                                <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-100 mt-4">
                                     <div class="flex items-start space-x-3">
                                         <div>
                                             <div class="flex flex-row space-x-2">
-                                                <h4 class="font-bold text-sm text-gray-700 mb-1">
+                                                <h4 class="font-bold text-sm mb-1">
                                                     Important Information
                                                 </h4>
                                                 <UIcon
@@ -234,7 +234,7 @@
                                 <!-- Placeholder when no order is selected -->
                                 <UCard
                                     v-if="!selectedTransaction"
-                                    class="h-full flex flex-col items-center justify-center p-8 bg-gray-50 text-center">
+                                    class="h-full flex flex-col items-center justify-center p-8 bg-gray-50 dark:bg-gray-800 text-center">
                                     <UIcon
                                         name="i-lucide-package"
                                         class="text-gray-300 w-16 h-16 mb-4 mx-auto" />

@@ -262,7 +262,7 @@
                                 <div class="w-64 h-96 rounded-lg overflow-hidden">
                                     <div
                                         v-if="!selectedCard"
-                                        class="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400">
+                                        class="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400">
                                         Card Preview
                                     </div>
                                     <img
