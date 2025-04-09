@@ -39,7 +39,7 @@ http://localhost:3000
 
 ## Technical Architecture Diagram
 [WIP]
-<!-- <img width="" alt="architecture diagram" src=""> -->
+<img title="technical overiview diagram" alt="technical overview diagram" src="">
 
 ## Frameworks & Databases Used
 <p align="center"><strong>UI/UX</strong></p>
@@ -91,14 +91,13 @@ http://localhost:3000
 
 <p align="center"><strong>Storage Solutions</strong></p>
 <div align="center">
-	<code><a href="https://firebase.google.com/"><img width="50" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/firebase.png" alt="Firebase" title="Firebase"/></a></code>
 	<code><a href="https://supabase.com/"><img width="50" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/supabase.png" alt="Supabase" title="Supabase"/></a></code>
 	<code><a href="https://www.mongodb.com/"><img width="50" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/mongodb.png" alt="MongoDB" title="MongoDB"/></a></code>
 	<code><a href="https://redis.io/"><img width="50" src="https://raw.githubusercontent.com/marwin1991/profile-technology-icons/refs/heads/main/icons/redis.png" alt="Redis Cache" title="Redis Cache"/></a></code>
 </div>
 <p align="center">
 <br>
-<i> Firebase | Supabase | MongoDB | Redis Cache </i>
+<i> Supabase | MongoDB | Redis Cache </i>
 </p>
 <br>
 
@@ -120,9 +119,9 @@ http://localhost:3000
 <table border=0>
 <tr>
 	<td><img>To fill</td>
-	<td><img>To fill</td>
-	<td><img>To fill</td>
-	<td><img>To fill</td>
+	<td><img src="https://raw.githubusercontent.com/angzhaofeng/esd_images/refs/heads/main/IMG_6149.jpg?token=GHSAT0AAAAAAC6HJ7PD7RXCOXTQKUTCX7NMZ7WPGAQ" alt="Zhao Feng" width="120" height="120" style="display:block; margin:0 auto;"></td>
+	<td><img src="https://raw.githubusercontent.com/angzhaofeng/esd_images/refs/heads/main/bigbrainsquare.JPG?token=GHSAT0AAAAAAC6HJ7PCWSBLID4CBE6RQB6WZ7WPUAA" alt="Jagat" width="120" height="120" style="display:block; margin:0 auto;"></td>
+	<td><img src="https://raw.githubusercontent.com/angzhaofeng/esd_images/refs/heads/main/6318947549247029871.jpg?token=GHSAT0AAAAAAC6HJ7PDLS35Q4VWJ6C5ZQT6Z7WPTMA" alt="Jagat" width="120" height="120" style="display:block; margin:0 auto;"></td>
 	<td><img>To fill</td>
 	<td><img>To fill</td>
 </tr>

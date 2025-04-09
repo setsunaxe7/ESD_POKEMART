@@ -146,14 +146,14 @@ def get_db(channel, method, properties, body):
         # print("Publishing data to RabbitMQ...")
         channel.basic_publish(
             exchange=exchange_name,
-            routing_key=".return",
+            routing_key="request.return",
             body=payload
         )
     except Exception as e:
         error_payload = json.dumps({"error": str(e)})
         channel.basic_publish(
             exchange=exchange_name,
-            routing_key=".return",
+            routing_key="request.return",
             body=error_payload
         )
 
